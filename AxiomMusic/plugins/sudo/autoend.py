@@ -1,0 +1,38 @@
+# -----------------------------------------------
+# 🔸 AxiomMusic Project
+# 🔹 Developed & Maintained by: Axiom Bots (https://t.me/axiombots)
+# 📅 Copyright © 2026 – All Rights Reserved
+#
+# 📖 License:
+# This source code is open for educational and non-commercial use ONLY.
+# You are required to retain this credit in all copies or substantial portions of this file.
+# Commercial use, redistribution, or removal of this notice is strictly prohibited
+# without prior written permission from the author.
+#
+# ❤️ Made with dedication and love by AxiomBots
+# -----------------------------------------------
+
+
+from pyrogram import filters
+from pyrogram.types import Message
+from AxiomMusic import app
+from AxiomMusic.misc import SUDOERS
+from AxiomMusic.utils.database import autoend_off, autoend_on
+
+
+@app.on_message(filters.command("autoend") & SUDOERS)
+async def auto_end_stream(_, message: Message):
+    usage = "<blockquote expandable><b>✧ ᴇxᴀᴍᴘʟᴇ :\n\n/autoend [ᴇɴᴀʙʟᴇ | ᴅɪsᴀʙʟᴇ] </b></blockquote>"
+    if len(message.command) != 2:
+        return await message.reply_text(usage)
+    state = message.text.split(None, 1)[1].strip().lower()
+    if state == "enable":
+        await autoend_on()
+        await message.reply_text(
+            "<blockquote expandable><b>✧ ᴀᴜᴛᴏ ᴇɴᴅ sᴛʀᴇᴀᴍ ᴇɴᴀʙʟᴇᴅ.\n\nϻᴧᴧηᴧᴠɪɪ ᴡɪʟʟ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ʟᴇᴀᴠᴇ ᴛʜᴇ ᴠɪᴅᴇᴏᴄʜᴀᴛ ᴀғᴛᴇʀ ғᴇᴡ ᴍɪɴs ᴡʜᴇɴ ɴᴏ ᴏɴᴇ ɪs ʟɪsᴛᴇɴɪɴɢ. </b></blockquote>"
+        )
+    elif state == "disable":
+        await autoend_off()
+        await message.reply_text("<blockquote expandable><b>✧ ᴀᴜᴛᴏ ᴇɴᴅ sᴛʀᴇᴀᴍ ᴅɪsᴀʙʟᴇᴅ. </b></blockquote>")
+    else:
+        await message.reply_text(usage)

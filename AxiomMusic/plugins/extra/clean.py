@@ -1,0 +1,32 @@
+# -----------------------------------------------
+# 🔸 AxiomMusic Project
+# 🔹 Developed & Maintained by: Axiom Bots (https://t.me/axiombots)
+# 📅 Copyright © 2026 – All Rights Reserved
+#
+# 📖 License:
+# This source code is open for educational and non-commercial use ONLY.
+# You are required to retain this credit in all copies or substantial portions of this file.
+# Commercial use, redistribution, or removal of this notice is strictly prohibited
+# without prior written permission from the author.
+#
+# ❤️ Made with dedication and love by AxiomBots
+# -----------------------------------------------
+
+
+import os
+import shutil
+from pyrogram import filters
+from AxiomMusic import app
+from AxiomMusic.misc import SUDOERS
+
+
+@app.on_message(filters.command("clean") & SUDOERS)
+async def clean(_, message):
+    A = await message.reply_text("<blockquote expandable><b>✧ ᴄʟᴇᴀɴɪɴɢ ᴛᴇᴍᴘ ᴅɪʀᴇᴄᴛᴏʀɪᴇs... </b></blockquote>")
+    dir = "downloads"
+    dir1 = "cache"
+    shutil.rmtree(dir)
+    shutil.rmtree(dir1)
+    os.mkdir(dir)
+    os.mkdir(dir1)
+    await A.edit("<blockquote expandable><b>✧ ᴛᴇᴍᴘ ᴅɪʀᴇᴄᴛᴏʀɪᴇs ᴀʀᴇ ᴄʟᴇᴀɴᴇᴅ </b></blockquote>")
