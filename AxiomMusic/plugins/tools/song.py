@@ -339,6 +339,7 @@ async def song_download_cb(client, CallbackQuery, _):
 
         med = InputMediaVideo(
             media=file_path,
+            has_spoiler=True,
             duration=duration,
             width=width,
             height=height,
@@ -384,6 +385,7 @@ async def song_download_cb(client, CallbackQuery, _):
 
         med = InputMediaAudio(
             media=filename,
+            has_spoiler=True,
             caption=title,
             thumb=thumb_image_path,
             title=title,
