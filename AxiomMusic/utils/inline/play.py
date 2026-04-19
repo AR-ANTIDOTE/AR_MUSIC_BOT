@@ -45,24 +45,24 @@ def stream_markup_timer(_, chat_id, played, dur):
     played_sec = time_to_seconds(played)
     duration_sec = time_to_seconds(dur)
     percentage = (played_sec / duration_sec) * 100
-    umm = math.floor(percentage)
-    if 0 < umm <= 10:
+    ufff = math.floor(percentage)
+    if 0 < ufff <= 10:
         bar = "♡—————————"
-    elif 10 < umm < 20:
+    elif 10 < ufff < 20:
         bar = "—♡————————"
-    elif 20 <= umm < 30:
+    elif 20 <= ufff < 30:
         bar = "——♡———————"
-    elif 30 <= umm < 40:
+    elif 30 <= ufff < 40:
         bar = "———♡——————"
-    elif 40 <= umm < 50:
+    elif 40 <= ufff < 50:
         bar = "————♡—————"
-    elif 50 <= umm < 60:
+    elif 50 <= ufff < 60:
         bar = "—————♡————"
-    elif 60 <= umm < 70:
+    elif 60 <= ufff < 70:
         bar = "——————♡———"
-    elif 70 <= umm < 80:
+    elif 70 <= ufff < 80:
         bar = "———————♡——"
-    elif 80 <= umm < 95:
+    elif 80 <= ufff < 95:
         bar = "————————♡—"
     else:
         bar = "—————————♡"
