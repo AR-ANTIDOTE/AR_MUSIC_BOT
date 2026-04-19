@@ -113,114 +113,86 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     REG  = "AxiomMusic/assets/font.ttf"
     BOLD = "AxiomMusic/assets/font2.ttf"
 
-    f_title = _font(BOLD, 28)
-    f_small = _font(REG, 22)
-    f_tiny  = _font(REG, 18)
+    f_title = _font(BOLD, 40)
+    f_artist = _font(REG, 26)
+    f_time = _font(REG, 22)
 
-    # ───────── BACKGROUND (REAL FIX) ─────────
-    bg = Image.open(raw_path).convert("RGB").resize((W, H))
-    bg = bg.filter(ImageFilter.GaussianBlur(60))
+    # ───── BACKGROUND ─────
+    bg = Image.new("RGB", (W, H), (230, 230, 230))
+    base = bg.convert("RGBA")
 
-    overlay = Image.new("RGBA", (W, H), (0,0,0,160))
-    bg = Image.alpha_composite(bg.convert("RGBA"), overlay)
+    draw = ImageDraw.Draw(base)
 
-    draw = ImageDraw.Draw(bg)
+    # ───── MAIN CARD ─────
+    cx, cy = 320, 180
+    CW, CH = 640, 300
 
-    # ───────── WAVES (MATCH STYLE) ─────────
-    wave = Image.new("RGBA", (W, H), (0,0,0,0))
-    wd = ImageDraw.Draw(wave)
+    card = Image.new("RGBA", (CW, CH), (60, 60, 60, 255))
 
-    for i in range(5):
-        wd.ellipse((900-100*i, 150-100*i, 900+100*i, 150+100*i),
-                   outline=(255,255,255,80), width=4)
+    # gradient
+    for y in range(CH):
+        shade = int(70 - (y/CH)*30)
+        ImageDraw.Draw(card).line([(0,y),(CW,y)], fill=(shade,shade,shade))
 
-        wd.ellipse((300-100*i, 600-100*i, 300+100*i, 600+100*i),
-                   outline=(255,255,255,60), width=4)
+    mask = Image.new("L", (CW, CH), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0,0,CW,CH), radius=40, fill=255)
 
-    bg = Image.alpha_composite(bg, wave)
+    base.paste(card, (cx, cy), mask)
 
-    # ───────── MAIN CARD (FIXED POSITION) ─────────
-    cx, cy = 440, 140
-    CARD_W, CARD_H = 400, 420
+    draw = ImageDraw.Draw(base)
 
-    # shadow
-    shadow = Image.new("RGBA", (W, H), (0,0,0,0))
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        (cx+10, cy+10, cx+CARD_W+10, cy+CARD_H+10),
-        radius=40,
-        fill=(0,0,0,200)
-    )
-    bg = Image.alpha_composite(bg, shadow.filter(ImageFilter.GaussianBlur(25)))
+    # ───── VINYL DISC ─────
+    vcx, vcy = cx + CW//2, cy - 40
 
-    # card
-    card = Image.new("RGBA", (CARD_W, CARD_H), (235,235,235,255))
-    mask = Image.new("L", (CARD_W, CARD_H), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0,0,CARD_W,CARD_H), radius=40, fill=255)
-    bg.paste(card, (cx, cy), mask)
+    for r in range(120, 40, -10):
+        draw.ellipse((vcx-r, vcy-r, vcx+r, vcy+r), outline=(20,20,20), width=3)
 
-    # ───────── ALBUM IMAGE (CORRECT SIZE) ─────────
-    art = Image.open(raw_path).convert("RGB").resize((240,240))
-    m = Image.new("L", (240,240), 0)
-    ImageDraw.Draw(m).rounded_rectangle((0,0,240,240), radius=30, fill=255)
-    bg.paste(art, (cx+30, cy+30), m)
+    draw.ellipse((vcx-120, vcy-120, vcx+120, vcy+120), fill=(30,30,30))
 
-    draw = ImageDraw.Draw(bg)
+    # ───── LEFT ALBUM ─────
+    try:
+        art = Image.open(raw_path).convert("RGB").resize((140,140))
+        m = Image.new("L", (140,140), 0)
+        ImageDraw.Draw(m).rounded_rectangle((0,0,140,140), radius=25, fill=255)
+        base.paste(art, (cx-70, cy+60), m)
+    except:
+        pass
 
-    # ───────── MUSIC ICON ─────────
-    draw.ellipse((cx-20, cy-30, cx+40, cy+30), fill=(80,80,80))
-    draw.text((cx-5, cy-15), "♪", fill="white", font=f_small)
+    # ───── RIGHT KNOB ─────
+    kx, ky = cx + CW + 40, cy + 150
 
-    # ───────── PILLS (FIXED ALIGNMENT) ─────────
-    def pill(x, y, text):
-        pad = 14
-        tw = int(f_small.getlength(text))
-        w = tw + pad*2
-        h = 38
+    draw.ellipse((kx-70, ky-70, kx+70, ky+70), fill=(50,50,50))
+    draw.ellipse((kx-50, ky-50, kx+50, ky+50), fill=(200,200,200))
 
-        shape = Image.new("RGBA", (w, h), (255,255,255,255))
-        m = Image.new("L", (w, h), 0)
-        ImageDraw.Draw(m).rounded_rectangle((0,0,w,h), radius=18, fill=255)
-        bg.paste(shape, (x,y), m)
+    # ───── TEXT ─────
+    draw.text((cx+120, cy+40), "Pray For Me", fill=(255,255,255), font=f_title)
+    draw.text((cx+120, cy+90), channel, fill=(200,200,200), font=f_artist)
 
-        draw.text((x+pad, y+8), text, fill=(0,0,0), font=f_small)
+    # ───── PROGRESS BAR ─────
+    px1, px2 = cx+120, cx+520
+    py = cy + 150
 
-    px = cx + 260
-    py = cy + 60
+    draw.line((px1, py, px2, py), fill=(180,180,180), width=4)
+    draw.ellipse((px1+200-8, py-8, px1+200+8, py+8), fill=(255,255,255))
 
-    pill(px, py, _trim(title, f_small, 180))
-    pill(px, py+55, channel)
-    pill(px, py+110, "52M views")
+    draw.text((px1, py-30), "2:26", font=f_time, fill=(220,220,220))
+    draw.text((px2-40, py-30), duration_text, font=f_time, fill=(220,220,220))
 
-    # ───────── PLAY BUTTON ─────────
-    draw.ellipse((px+100, py-45, px+150, py+5), fill=(0,0,0))
-    draw.polygon([(px+115, py-30), (px+115, py-10), (px+135, py-20)], fill=(255,255,255))
+    # ───── CONTROLS ─────
+    cy2 = cy + 220
 
-    # ───────── PLAYER BAR (FIXED) ─────────
-    bx, by = cx + 40, cy + 300
-    bw, bh = 300, 80
+    draw.text((cx+160, cy2), "⟲", font=f_artist, fill=(220,220,220))
+    draw.text((cx+240, cy2), "⏮", font=f_artist, fill=(220,220,220))
+    draw.text((cx+320, cy2), "⏸", font=f_artist, fill=(220,220,220))
+    draw.text((cx+400, cy2), "⏭", font=f_artist, fill=(220,220,220))
+    draw.text((cx+480, cy2), "🔁", font=f_artist, fill=(220,220,220))
 
-    bar = Image.new("RGBA", (bw, bh), (255,255,255,255))
-    m = Image.new("L", (bw, bh), 0)
-    ImageDraw.Draw(m).rounded_rectangle((0,0,bw,bh), radius=30, fill=255)
-    bg.paste(bar, (bx,by), m)
+    # ───── GREEN CHECK ─────
+    draw.ellipse((cx+520, cy+40, cx+560, cy+80), fill=(50,200,90))
+    draw.text((cx+530, cy+45), "✓", fill="white", font=f_artist)
 
-    draw = ImageDraw.Draw(bg)
-
-    # progress line
-    draw.line((bx+30, by+25, bx+260, by+25), fill=(150,150,150), width=3)
-    draw.ellipse((bx+110, by+20, bx+120, by+30), fill=(0,0,0))
-
-    # time
-    draw.text((bx+20, by+5), "0:00", font=f_tiny, fill=(100,100,100))
-    draw.text((bx+230, by+5), duration_text, font=f_tiny, fill=(100,100,100))
-
-    # controls
-    draw.text((bx+70, by+45), "⏮", font=f_small, fill=(0,0,0))
-    draw.text((bx+130, by+45), "⏸", font=f_small, fill=(0,0,0))
-    draw.text((bx+190, by+45), "⏭", font=f_small, fill=(0,0,0))
-
-    # ───────── SAVE ─────────
-    bg.convert("RGB").save(cache_path, "PNG")
+    # ───── SAVE ─────
+    base.convert("RGB").save(cache_path, "PNG")
     return cache_path
 
 
