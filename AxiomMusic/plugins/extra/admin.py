@@ -83,6 +83,7 @@ async def bans_user(user_id, first_name, admin_id, admin_name, chat_id, message)
 
     ban_message = await message.reply_photo(
         photo=random.choice(kickpic),
+        has_spoiler=True,
         caption=f"<blockquote expandable><b>✧ {user_mention} ᴡᴧs ʙᴀɴɴᴇᴅ ʙʏ {admin_mention}. </b></blockquote>"
         # reply_markup=InlineKeyboardMarkup(button)  # unban button chad de
     )
@@ -163,6 +164,7 @@ async def unban_user(client, message):
         admin_mention = mention(admin_id, admin_name)
         await message.reply_photo(
             photo=random.choice(kickpic),
+            has_spoiler=True,
             caption=f"<blockquote expandable><b>✧ {user_mention} ᴡᴧs ᴜηʙᴀɴɴᴇᴅ ʙʏ {admin_mention}. </b></blockquote>",
             reply_markup=InlineKeyboardMarkup(button),
         )
@@ -191,6 +193,7 @@ async def kickme_command(client, message):
         await app.ban_chat_member(chat_id, user_id)
         await message.reply_photo(
             photo=random.choice(kickpic),
+            has_spoiler=True,
             caption=f"<blockquote expandable><b>✧ {user_name} has kicked themselves out of the group! </b></blockquote>",
             reply_markup=InlineKeyboardMarkup(button),
         )
