@@ -88,11 +88,11 @@ async def authusers(client, message: Message, _):
         j = 0
         mystic = await message.reply_text(_["auth_6"])
         text = _["auth_7"].format(message.chat.title)
-        for umm in _wtf:
-            _umm = await get_authuser(message.chat.id, umm)
-            user_id = _umm["auth_user_id"]
-            admin_id = _umm["admin_id"]
-            admin_name = _umm["admin_name"]
+        for ufff in _wtf:
+            _ufff = await get_authuser(message.chat.id, ufff)
+            user_id = _ufff["auth_user_id"]
+            admin_id = _ufff["admin_id"]
+            admin_name = _ufff["admin_name"]
             try:
                 user = (await app.get_users(user_id)).first_name
                 j += 1
