@@ -16,40 +16,42 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 # ─────────────────────────────
 def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_path):
 
-    base = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
-    WIDTH, HEIGHT = base.size
+    # 🔥 TEMPLATE (TRANSPARENT BG)
+    template = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
+    WIDTH, HEIGHT = template.size
+
+    # ─────────────
+    # 🎨 BACKGROUND (BLURRED THUMB)
+    # ─────────────
+    try:
+        bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
+
+        # strong blur
+        bg = bg.filter(ImageFilter.GaussianBlur(50))
+
+        # color enhance (song vibe)
+        bg = ImageEnhance.Color(bg).enhance(1.6)
+
+        # dark overlay (glass feel)
+        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 130))
+        bg = Image.alpha_composite(bg, overlay)
+
+        # 🔥 FINAL BASE = blurred bg + template
+        base = Image.alpha_composite(bg, template)
+
+    except Exception as e:
+        print("BG ERROR:", e)
+        base = template
+
     draw = ImageDraw.Draw(base)
 
     # Fonts
     font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 44)
     font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
+    font_watermark = ImageFont.truetype("AxiomMusic/assets/font.ttf", 22)
 
     # ─────────────
-    # 🎨 BACKGROUND BLUR (🔥 UPDATED)
-    # ─────────────
-    try:
-        bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
-
-        # 🔥 Strong blur
-        bg = bg.filter(ImageFilter.GaussianBlur(45))
-
-        # 🎨 Color boost (song colors highlight)
-        bg = ImageEnhance.Color(bg).enhance(1.8)
-
-        # 🌑 Dark overlay (glass effect)
-        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 140))
-        bg = Image.alpha_composite(bg, overlay)
-
-        # Merge with template
-        base = Image.alpha_composite(bg, base)
-
-    except Exception as e:
-        print("BG ERROR:", e)
-
-    draw = ImageDraw.Draw(base)
-
-    # ─────────────
-    # 🎵 ALBUM ART
+    # 🎵 ALBUM ART (UNCHANGED)
     # ─────────────
     try:
         ART_SIZE = 230
@@ -111,6 +113,22 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         channel[:35],
         fill=(200, 200, 200),
         font=font_artist,
+    )
+
+    # ─────────────
+    # ✨ WATERMARK (BOTTOM RIGHT)
+    # ─────────────
+    watermark_text = "AxiomBots"
+
+    bbox = draw.textbbox((0, 0), watermark_text, font=font_watermark)
+    w = bbox[2] - bbox[0]
+    h = bbox[3] - bbox[1]
+
+    draw.text(
+        (WIDTH - w - 20, HEIGHT - h - 20),
+        watermark_text,
+        fill=(255, 255, 255, 180),
+        font=font_watermark,
     )
 
     # ─────────────
