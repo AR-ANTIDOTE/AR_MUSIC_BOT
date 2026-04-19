@@ -54,8 +54,8 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         )
 
         # 👇 FINAL PERFECT POSITION
-        art_x = 170
-        art_y = 418
+        art_x = 165
+        art_y = 423
 
         base.paste(art, (art_x, art_y), mask)
 
@@ -92,7 +92,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     # 👇 TEXT POSITION FIXED
     text_x = 460
     text_y = 400
-    max_width = 690
+    max_width = 700
 
     lines = wrap_text(title, font_title, max_width)
 
