@@ -12,110 +12,105 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 # ─────────────────────────────
-# 🎨 ADVANCED THUMBNAIL RENDER
+# 🎨 CLEAN THUMBNAIL RENDER
 # ─────────────────────────────
 def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_path):
 
+    # Load template
     base = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
+    WIDTH, HEIGHT = base.size
+
     draw = ImageDraw.Draw(base)
 
-    # 🔥 Fonts
-    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 58)
-    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 36)
-    font_time = ImageFont.truetype("AxiomMusic/assets/font.ttf", 30)
+    # Fonts
+    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 50)
+    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 32)
+    font_time = ImageFont.truetype("AxiomMusic/assets/font.ttf", 26)
 
     # ─────────────
-    # 🎨 BACKGROUND BLUR (GLASS EFFECT)
+    # 🎨 BACKGROUND BLUR
     # ─────────────
     try:
-        bg = Image.open(raw_path).resize(base.size).filter(ImageFilter.GaussianBlur(25))
-        dark_overlay = Image.new("RGBA", base.size, (0, 0, 0, 140))
-        bg = Image.alpha_composite(bg.convert("RGBA"), dark_overlay)
+        bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
+        bg = bg.filter(ImageFilter.GaussianBlur(18))
+
+        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 120))
+        bg = Image.alpha_composite(bg, overlay)
+
         base = Image.alpha_composite(bg, base)
-        draw = ImageDraw.Draw(base)
     except:
         pass
 
+    draw = ImageDraw.Draw(base)
+
     # ─────────────
-    # 🎵 ALBUM ART (BIG + CENTERED)
+    # 🎵 ALBUM ART
     # ─────────────
     try:
-        ART_SIZE = 260
+        ART_SIZE = int(WIDTH * 0.18)
+
         art = Image.open(raw_path).resize((ART_SIZE, ART_SIZE))
 
         mask = Image.new("L", (ART_SIZE, ART_SIZE), 0)
         ImageDraw.Draw(mask).rounded_rectangle(
-            (0, 0, ART_SIZE, ART_SIZE), 50, fill=255
+            (0, 0, ART_SIZE, ART_SIZE), 40, fill=255
         )
 
-        # Glow effect
-        glow = Image.new("RGBA", base.size, (0, 0, 0, 0))
-        gdraw = ImageDraw.Draw(glow)
-        gdraw.rounded_rectangle(
-            (110, 400, 110 + ART_SIZE, 400 + ART_SIZE),
-            50,
-            fill=(255, 255, 255, 40),
-        )
+        art_x = int(WIDTH * 0.07)
+        art_y = int(HEIGHT * 0.45)
 
-        base = Image.alpha_composite(base, glow.filter(ImageFilter.GaussianBlur(15)))
-
-        base.paste(art, (110, 400), mask)
+        base.paste(art, (art_x, art_y), mask)
 
     except Exception as e:
-        print(e)
+        print("ART ERROR:", e)
 
     # ─────────────
-    # 📝 TITLE & CHANNEL
+    # 📝 TEXT (FIXED SAFE ZONE)
     # ─────────────
     title = re.sub(r"\W+", " ", title)
 
-    draw.text((420, 400), title[:30], fill="white", font=font_title)
-    draw.text((420, 480), channel[:35], fill=(210, 210, 210), font=font_artist)
+    text_x = int(WIDTH * 0.30)
+    title_y = int(HEIGHT * 0.45)
+
+    draw.text((text_x, title_y), title[:40], fill="white", font=font_title)
+    draw.text((text_x, title_y + 70), channel[:35], fill=(200, 200, 200), font=font_artist)
 
     # ─────────────
     # ⏱️ TIME + PROGRESS BAR
     # ─────────────
+    bar_x1 = text_x
+    bar_x2 = int(WIDTH * 0.88)
+    bar_y = int(HEIGHT * 0.68)
 
-    # time text
-    draw.text((420, 560), "0:00", fill=(200, 200, 200), font=font_time)
-    draw.text((1080, 560), duration_text, fill=(200, 200, 200), font=font_time)
+    draw.text((bar_x1, bar_y + 20), "0:00", fill=(200, 200, 200), font=font_time)
+    draw.text((bar_x2 - 60, bar_y + 20), duration_text, fill=(200, 200, 200), font=font_time)
 
-    # progress bar
-    bar_x1, bar_y = 420, 530
-    bar_x2 = 1100
+    # bar bg
+    draw.line((bar_x1, bar_y, bar_x2, bar_y), fill=(120, 120, 120), width=5)
 
-    # background bar
-    draw.line((bar_x1, bar_y, bar_x2, bar_y), fill=(100, 100, 100), width=6)
-
-    # progress (fake 30%)
+    # progress (30%)
     progress = int((bar_x2 - bar_x1) * 0.3)
-    draw.line((bar_x1, bar_y, bar_x1 + progress, bar_y), fill=(255, 255, 255), width=6)
+    draw.line((bar_x1, bar_y, bar_x1 + progress, bar_y), fill="white", width=5)
 
     # knob
     draw.ellipse(
-        (bar_x1 + progress - 8, bar_y - 8, bar_x1 + progress + 8, bar_y + 8),
+        (bar_x1 + progress - 7, bar_y - 7, bar_x1 + progress + 7, bar_y + 7),
         fill="white",
     )
 
     # ─────────────
-    # 🔊 VOLUME KNOB (ENHANCED)
+    # 🔊 VOLUME DOT
     # ─────────────
-    vx, vy = 1115, 360
+    vx = int(WIDTH * 0.92)
+    vy = int(HEIGHT * 0.42)
 
-    glow = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    gdraw = ImageDraw.Draw(glow)
-    gdraw.ellipse((vx-18, vy-18, vx+18, vy+18), fill=(255, 255, 255, 120))
-
-    base = Image.alpha_composite(base, glow.filter(ImageFilter.GaussianBlur(12)))
-    draw = ImageDraw.Draw(base)
-
-    draw.ellipse((vx-10, vy-10, vx+10, vy+10), fill=(230, 230, 230))
+    draw.ellipse((vx - 6, vy - 6, vx + 6, vy + 6), fill=(220, 220, 220))
 
     # ─────────────
-    # ✨ FINAL ENHANCEMENT
+    # ✨ FINAL TOUCH
     # ─────────────
-    base = ImageEnhance.Contrast(base).enhance(1.1)
-    base = ImageEnhance.Sharpness(base).enhance(1.5)
+    base = ImageEnhance.Contrast(base).enhance(1.05)
+    base = ImageEnhance.Sharpness(base).enhance(1.3)
 
     base.convert("RGB").save(cache_path)
 
