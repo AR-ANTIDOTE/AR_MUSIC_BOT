@@ -16,45 +16,40 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 # ─────────────────────────────
 def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_path):
 
-    # 🔥 TEMPLATE (TRANSPARENT BG)
-    template = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
-    WIDTH, HEIGHT = template.size
-
-   # ─────────────
-# 🎨 BACKGROUND (FINAL FIX)
-# ─────────────
-try:
-    bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
-
-    # strong blur
-    bg = bg.filter(ImageFilter.GaussianBlur(50))
-
-    # color enhance
-    bg = ImageEnhance.Color(bg).enhance(1.6)
-
-    # dark overlay
-    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 130))
-    bg = Image.alpha_composite(bg, overlay)
-
-    # 🔥 IMPORTANT FIX (NEW BASE)
-    base = bg.copy()
-
-    # 🔥 TEMPLATE KO UPAR LAGAO (THIS WAS MISSING PROPERLY)
-    base.paste(template, (0, 0), template)
-
-except Exception as e:
-    print("BG ERROR:", e)
-    base = template.copy()
-    
+    base = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
+    WIDTH, HEIGHT = base.size
     draw = ImageDraw.Draw(base)
 
     # Fonts
     font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 44)
     font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
-    font_watermark = ImageFont.truetype("AxiomMusic/assets/font.ttf", 22)
 
     # ─────────────
-    # 🎵 ALBUM ART (UNCHANGED)
+    # 🎨 BACKGROUND BLUR (🔥 UPDATED)
+    # ─────────────
+    try:
+        bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
+
+        # 🔥 Strong blur
+        bg = bg.filter(ImageFilter.GaussianBlur(45))
+
+        # 🎨 Color boost (song colors highlight)
+        bg = ImageEnhance.Color(bg).enhance(1.8)
+
+        # 🌑 Dark overlay (glass effect)
+        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 140))
+        bg = Image.alpha_composite(bg, overlay)
+
+        # Merge with template
+        base = Image.alpha_composite(bg, base)
+
+    except Exception as e:
+        print("BG ERROR:", e)
+
+    draw = ImageDraw.Draw(base)
+
+    # ─────────────
+    # 🎵 ALBUM ART
     # ─────────────
     try:
         ART_SIZE = 230
@@ -119,22 +114,6 @@ except Exception as e:
     )
 
     # ─────────────
-    # ✨ WATERMARK (BOTTOM RIGHT)
-    # ─────────────
-    watermark_text = "AxiomBots"
-
-    bbox = draw.textbbox((0, 0), watermark_text, font=font_watermark)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-
-    draw.text(
-        (WIDTH - w - 20, HEIGHT - h - 20),
-        watermark_text,
-        fill=(255, 255, 255, 180),
-        font=font_watermark,
-    )
-
-    # ─────────────
     # ✨ FINAL TOUCH
     # ─────────────
     base = ImageEnhance.Contrast(base).enhance(1.05)
@@ -142,7 +121,7 @@ except Exception as e:
 
     base.convert("RGB").save(cache_path)
 
-        return cache_path
+    return cache_path
 
 
 # ─────────────────────────────
@@ -198,4 +177,4 @@ async def get_thumb(videoid: str, player_username: str = None):
     if os.path.exists(raw_path):
         os.remove(raw_path)
 
-        return result
+    return result
