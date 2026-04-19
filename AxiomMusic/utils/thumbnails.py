@@ -113,26 +113,35 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     REG  = "AxiomMusic/assets/font.ttf"
     BOLD = "AxiomMusic/assets/font2.ttf"
 
-    f_title = _font(BOLD, 40)
+    f_title = _font(BOLD, 42)
     f_artist = _font(REG, 26)
-    f_time = _font(REG, 22)
+    f_time = _font(REG, 20)
 
     # ───── BACKGROUND ─────
-    bg = Image.new("RGB", (W, H), (230, 230, 230))
-    base = bg.convert("RGBA")
+    base = Image.new("RGBA", (W, H), (235, 235, 235))
 
     draw = ImageDraw.Draw(base)
 
-    # ───── MAIN CARD ─────
-    cx, cy = 320, 180
-    CW, CH = 640, 300
+    # ───── CARD (CENTERED FIXED) ─────
+    cx, cy = 320, 220
+    CW, CH = 640, 260
 
-    card = Image.new("RGBA", (CW, CH), (60, 60, 60, 255))
+    # shadow
+    shadow = Image.new("RGBA", (W, H), (0,0,0,0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        (cx+10, cy+10, cx+CW+10, cy+CH+10),
+        radius=40,
+        fill=(0,0,0,120)
+    )
+    base = Image.alpha_composite(base, shadow.filter(ImageFilter.GaussianBlur(20)))
 
-    # gradient
+    # card gradient
+    card = Image.new("RGBA", (CW, CH))
+    cd = ImageDraw.Draw(card)
+
     for y in range(CH):
         shade = int(70 - (y/CH)*30)
-        ImageDraw.Draw(card).line([(0,y),(CW,y)], fill=(shade,shade,shade))
+        cd.line([(0,y),(CW,y)], fill=(shade,shade,shade))
 
     mask = Image.new("L", (CW, CH), 0)
     ImageDraw.Draw(mask).rounded_rectangle((0,0,CW,CH), radius=40, fill=255)
@@ -141,28 +150,28 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     draw = ImageDraw.Draw(base)
 
-    # ───── VINYL DISC ─────
-    vcx, vcy = cx + CW//2, cy - 40
+    # ───── VINYL (FIXED BEHIND CARD) ─────
+    vcx, vcy = cx + CW//2, cy - 60
 
-    for r in range(120, 40, -10):
-        draw.ellipse((vcx-r, vcy-r, vcx+r, vcy+r), outline=(20,20,20), width=3)
+    for r in range(120, 30, -8):
+        draw.ellipse((vcx-r, vcy-r, vcx+r, vcy+r), outline=(30,30,30), width=3)
 
-    draw.ellipse((vcx-120, vcy-120, vcx+120, vcy+120), fill=(30,30,30))
+    draw.ellipse((vcx-120, vcy-120, vcx+120, vcy+120), fill=(25,25,25))
 
-    # ───── LEFT ALBUM ─────
+    # ───── LEFT ALBUM (FIXED) ─────
     try:
-        art = Image.open(raw_path).convert("RGB").resize((140,140))
-        m = Image.new("L", (140,140), 0)
-        ImageDraw.Draw(m).rounded_rectangle((0,0,140,140), radius=25, fill=255)
-        base.paste(art, (cx-70, cy+60), m)
+        art = Image.open(raw_path).convert("RGB").resize((120,120))
+        m = Image.new("L", (120,120), 0)
+        ImageDraw.Draw(m).rounded_rectangle((0,0,120,120), radius=25, fill=255)
+        base.paste(art, (cx-80, cy+60), m)
     except:
         pass
 
-    # ───── RIGHT KNOB ─────
-    kx, ky = cx + CW + 40, cy + 150
+    # ───── RIGHT KNOB (FIXED) ─────
+    kx, ky = cx + CW + 60, cy + CH//2
 
-    draw.ellipse((kx-70, ky-70, kx+70, ky+70), fill=(50,50,50))
-    draw.ellipse((kx-50, ky-50, kx+50, ky+50), fill=(200,200,200))
+    draw.ellipse((kx-60, ky-60, kx+60, ky+60), fill=(50,50,50))
+    draw.ellipse((kx-40, ky-40, kx+40, ky+40), fill=(200,200,200))
 
     # ───── TEXT ─────
     draw.text((cx+120, cy+40), "Pray For Me", fill=(255,255,255), font=f_title)
@@ -172,40 +181,41 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     px1, px2 = cx+120, cx+520
     py = cy + 150
 
-    draw.line((px1, py, px2, py), fill=(180,180,180), width=4)
-    draw.ellipse((px1+200-8, py-8, px1+200+8, py+8), fill=(255,255,255))
+    draw.line((px1, py, px2, py), fill=(180,180,180), width=3)
+    draw.ellipse((px1+200-6, py-6, px1+200+6, py+6), fill=(255,255,255))
 
-    draw.text((px1, py-30), "2:26", font=f_time, fill=(220,220,220))
-    draw.text((px2-40, py-30), duration_text, font=f_time, fill=(220,220,220))
+    draw.text((px1, py-25), "2:26", font=f_time, fill=(220,220,220))
+    draw.text((px2-40, py-25), duration_text, font=f_time, fill=(220,220,220))
 
-    # ───── CONTROLS ─────
-    cy2 = cy + 220
+    # ───── CONTROLS (SHAPE BASED) ─────
+    cy2 = cy + 200
 
-    draw.text((cx+160, cy2), "⟲", font=f_artist, fill=(220,220,220))
-    draw.text((cx+240, cy2), "⏮", font=f_artist, fill=(220,220,220))
-    draw.text((cx+320, cy2), "⏸", font=f_artist, fill=(220,220,220))
-    draw.text((cx+400, cy2), "⏭", font=f_artist, fill=(220,220,220))
-    draw.text((cx+480, cy2), "🔁", font=f_artist, fill=(220,220,220))
+    # prev
+    draw.polygon([(cx+250, cy2), (cx+270, cy2-10), (cx+270, cy2+10)], fill="white")
+    draw.rectangle((cx+240, cy2-10, cx+245, cy2+10), fill="white")
+
+    # pause
+    draw.rectangle((cx+310, cy2-10, cx+315, cy2+10), fill="white")
+    draw.rectangle((cx+320, cy2-10, cx+325, cy2+10), fill="white")
+
+    # next
+    draw.polygon([(cx+380, cy2), (cx+360, cy2-10), (cx+360, cy2+10)], fill="white")
+    draw.rectangle((cx+385, cy2-10, cx+390, cy2+10), fill="white")
+
+    # shuffle
+    draw.line((cx+200, cy2, cx+220, cy2-10), fill="white", width=2)
+    draw.line((cx+200, cy2, cx+220, cy2+10), fill="white", width=2)
+
+    # repeat
+    draw.arc((cx+420, cy2-15, cx+450, cy2+15), 0, 300, fill="white", width=2)
 
     # ───── GREEN CHECK ─────
     draw.ellipse((cx+520, cy+40, cx+560, cy+80), fill=(50,200,90))
-    draw.text((cx+530, cy+45), "✓", fill="white", font=f_artist)
+    draw.text((cx+532, cy+45), "✓", fill="white", font=f_artist)
 
     # ───── SAVE ─────
     base.convert("RGB").save(cache_path, "PNG")
     return cache_path
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  PUBLIC API
-# ═══════════════════════════════════════════════════════════════════
-async def get_thumb(videoid: str, player_username: str = None) -> str:
-    if player_username is None:
-        player_username = app.username
-
-    cache_path = os.path.join(CACHE_DIR, f"{videoid}_thumb.png")
-    if os.path.exists(cache_path):
-        return cache_path
 
     # Fetch YouTube metadata
     try:
