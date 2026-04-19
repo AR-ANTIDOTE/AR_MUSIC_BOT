@@ -44,7 +44,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     # 🎵 ALBUM ART (FINAL FIXED)
     # ─────────────
     try:
-        ART_SIZE = 250
+        ART_SIZE = 255
 
         art = Image.open(raw_path).resize((ART_SIZE, ART_SIZE))
 
@@ -54,8 +54,8 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         )
 
         # 👇 FINAL PERFECT POSITION
-        art_x = 149
-        art_y = 400
+        art_x = 145
+        art_y = 490
 
         base.paste(art, (art_x, art_y), mask)
 
