@@ -21,17 +21,17 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     draw = ImageDraw.Draw(base)
 
     # Fonts
-    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 46)
-    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 30)
+    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 44)
+    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
 
     # ─────────────
     # 🎨 BACKGROUND BLUR
     # ─────────────
     try:
         bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
-        bg = bg.filter(ImageFilter.GaussianBlur(16))
+        bg = bg.filter(ImageFilter.GaussianBlur(14))
 
-        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 110))
+        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 100))
         bg = Image.alpha_composite(bg, overlay)
 
         base = Image.alpha_composite(bg, base)
@@ -41,20 +41,21 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     draw = ImageDraw.Draw(base)
 
     # ─────────────
-    # 🎵 ALBUM ART
+    # 🎵 ALBUM ART (FINAL FIXED)
     # ─────────────
     try:
-        ART_SIZE = 180
+        ART_SIZE = 140  # 👈 perfect fit
 
         art = Image.open(raw_path).resize((ART_SIZE, ART_SIZE))
 
         mask = Image.new("L", (ART_SIZE, ART_SIZE), 0)
         ImageDraw.Draw(mask).rounded_rectangle(
-            (0, 0, ART_SIZE, ART_SIZE), 35, fill=255
+            (0, 0, ART_SIZE, ART_SIZE), 30, fill=255
         )
 
-        art_x = 85
-        art_y = 355
+        # 👇 FINAL PERFECT POSITION
+        art_x = 135
+        art_y = 370
 
         base.paste(art, (art_x, art_y), mask)
 
@@ -62,7 +63,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         print("ART ERROR:", e)
 
     # ─────────────
-    # 📝 TEXT WRAP FIX
+    # 📝 TEXT WRAP (FIXED)
     # ─────────────
     def wrap_text(text, font, max_width):
         words = text.split()
@@ -88,33 +89,29 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     title = re.sub(r"\W+", " ", title)
 
-    text_x = 340
-    text_y = 360
-    max_width = 650
+    # 👇 TEXT POSITION FIXED
+    text_x = 430
+    text_y = 345
+    max_width = 560
 
     lines = wrap_text(title, font_title, max_width)
 
     for i, line in enumerate(lines):
-        draw.text((text_x, text_y + i * 55), line, fill="white", font=font_title)
+        draw.text((text_x, text_y + i * 48), line, fill="white", font=font_title)
 
     # channel
     draw.text(
-        (text_x, text_y + len(lines) * 55 + 10),
+        (text_x, text_y + len(lines) * 48 + 8),
         channel[:35],
         fill=(200, 200, 200),
         font=font_artist,
     )
 
     # ─────────────
-    # ❌ REMOVED UI
-    # ─────────────
-    # (no progress bar, no duration, no volume text)
-
-    # ─────────────
     # ✨ FINAL TOUCH
     # ─────────────
     base = ImageEnhance.Contrast(base).enhance(1.05)
-    base = ImageEnhance.Sharpness(base).enhance(1.3)
+    base = ImageEnhance.Sharpness(base).enhance(1.25)
 
     base.convert("RGB").save(cache_path)
 
