@@ -1,118 +1,134 @@
 import os
 import re
-import aiofiles
 import aiohttp
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import aiofiles
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 from py_yt import VideosSearch
 from config import YOUTUBE_IMG_URL
 from AxiomMusic import app
 
-# CACHE
+# cache folder
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# FONT LOADER
-def _font(path, size):
-    try:
-        return ImageFont.truetype(path, size)
-    except:
-        return ImageFont.load_default()
 
-# ─────────────────────────────────────────────
-# 🎨 SIMPLE CLEAN THUMB (stable)
-# ─────────────────────────────────────────────
+# ─────────────────────────────
+# 🎨 THUMBNAIL RENDER
+# ─────────────────────────────
 def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_path):
 
-    from PIL import Image, ImageDraw, ImageFont, ImageFilter
-
-    W, H = 1280, 720
-
-    REG  = "AxiomMusic/assets/font.ttf"
-    BOLD = "AxiomMusic/assets/font2.ttf"
-
-    f_title = _font(BOLD, 56)
-    f_artist = _font(REG, 36)
-    f_time = _font(REG, 28)
-
-    # ───── BACKGROUND (GRADIENT + BLUR) ─────
-    try:
-        bg = Image.open(raw_path).convert("RGB").resize((W, H))
-    except:
-        bg = Image.new("RGB", (W, H), (30, 30, 30))
-
-    bg = bg.filter(ImageFilter.GaussianBlur(40))
-
-    overlay = Image.new("RGBA", (W, H), (10, 15, 25, 180))
-    base = Image.alpha_composite(bg.convert("RGBA"), overlay)
-
+    # load template
+    base = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
     draw = ImageDraw.Draw(base)
 
-    # ───── GLASS CARD ─────
-    cx, cy = 140, 140
-    CW, CH = 1000, 440
+    # fonts
+    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 48)
+    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
+    font_time = ImageFont.truetype("AxiomMusic/assets/font.ttf", 22)
 
-    card = Image.new("RGBA", (CW, CH), (25, 30, 40, 230))
-    mask = Image.new("L", (CW, CH), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0,0,CW,CH), radius=50, fill=255)
-
-    # shadow
-    shadow = Image.new("RGBA", (W, H), (0,0,0,0))
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        (cx+15, cy+15, cx+CW+15, cy+CH+15),
-        radius=50,
-        fill=(0,0,0,120)
-    )
-    base = Image.alpha_composite(base, shadow.filter(ImageFilter.GaussianBlur(25)))
-
-    base.paste(card, (cx, cy), mask)
-
-    draw = ImageDraw.Draw(base)
-
-    # ───── ALBUM IMAGE ─────
+    # ─────────────
+    # 🎵 ALBUM IMAGE
+    # ─────────────
     try:
-        art = Image.open(raw_path).convert("RGB").resize((360, 360))
-        m = Image.new("L", (360, 360), 0)
-        ImageDraw.Draw(m).rounded_rectangle((0,0,360,360), radius=40, fill=255)
-        base.paste(art, (cx+40, cy+40), m)
+        art = Image.open(raw_path).resize((180, 180))
+
+        mask = Image.new("L", (180, 180), 0)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, 180, 180), 30, fill=255)
+
+        base.paste(art, (150, 290), mask)
     except:
         pass
 
-    # ───── TEXT ─────
-    tx = cx + 440
+    # ─────────────
+    # 📝 TITLE
+    # ─────────────
+    title = re.sub(r"\W+", " ", title)
+    draw.text((400, 230), title[:25], fill="white", font=font_title)
 
-    draw.text((tx, cy+80), _trim(title, f_title, 520), fill="white", font=f_title)
-    draw.text((tx, cy+170), channel, fill=(200,200,200), font=f_artist)
+    # ─────────────
+    # 👤 CHANNEL
+    # ─────────────
+    draw.text((400, 300), channel[:30], fill=(200, 200, 200), font=font_artist)
 
-    # ───── PROGRESS BAR ─────
-    px1, px2 = tx, tx + 420
-    py = cy + 260
+    # ─────────────
+    # ⏱ TIME
+    # ─────────────
+    draw.text((400, 370), "0:00", fill=(180,180,180), font=font_time)
+    draw.text((720, 370), duration_text, fill=(180,180,180), font=font_time)
 
-    draw.line((px1, py, px2, py), fill=(120,120,120), width=6)
-    draw.line((px1, py, px1+200, py), fill=(255,255,255), width=6)
-    draw.ellipse((px1+200-8, py-8, px1+200+8, py+8), fill="white")
+    # ─────────────
+    # 🔊 VOLUME KNOB (PERFECT POSITION)
+    # ─────────────
+    vx = 1115
+    vy = 360
 
-    draw.text((px1, py+20), "0:00", font=f_time, fill=(180,180,180))
-    draw.text((px2-60, py+20), duration_text, font=f_time, fill=(180,180,180))
+    glow = Image.new("RGBA", base.size, (0,0,0,0))
+    gdraw = ImageDraw.Draw(glow)
+    gdraw.ellipse((vx-14, vy-14, vx+14, vy+14), fill=(255,255,255,100))
+    base = Image.alpha_composite(base, glow.filter(ImageFilter.GaussianBlur(8)))
 
-    # ───── CONTROLS ─────
-    cy2 = cy + 330
+    draw = ImageDraw.Draw(base)
+    draw.ellipse((vx-10, vy-10, vx+10, vy+10), fill=(200,200,200))
+    draw.ellipse((vx-5, vy-5, vx+5, vy+5), fill=(255,255,255))
 
-    # prev
-    draw.polygon([(tx+40, cy2), (tx+60, cy2-12), (tx+60, cy2+12)], fill="white")
-    draw.rectangle((tx+30, cy2-12, tx+35, cy2+12), fill="white")
+    # ─────────────
+    # 🎨 SHARPNESS BOOST
+    # ─────────────
+    base = ImageEnhance.Sharpness(base).enhance(1.4)
 
-    # play/pause
-    draw.ellipse((tx+100, cy2-20, tx+140, cy2+20), fill=(255,255,255))
-    draw.rectangle((tx+115, cy2-10, tx+120, cy2+10), fill=(0,0,0))
-    draw.rectangle((tx+125, cy2-10, tx+130, cy2+10), fill=(0,0,0))
-
-    # next
-    draw.polygon([(tx+180, cy2), (tx+160, cy2-12), (tx+160, cy2+12)], fill="white")
-    draw.rectangle((tx+185, cy2-12, tx+190, cy2+12), fill="white")
-
-    # ───── BRAND ─────
-    draw.text((W-260, H-60), "@AxiomMusic", fill=(160,160,160), font=f_time)
-
-    # ───── SAVE ─────
-    base.convert("RGB").save(cache_path, "PNG")
+    # save
+    base.convert("RGB").save(cache_path)
     return cache_path
+
+
+# ─────────────────────────────
+# 🚀 MAIN FUNCTION (IMPORTANT)
+# ─────────────────────────────
+async def get_thumb(videoid: str, player_username: str = None):
+
+    if player_username is None:
+        player_username = app.username
+
+    cache_path = os.path.join(CACHE_DIR, f"{videoid}.png")
+
+    if os.path.exists(cache_path):
+        return cache_path
+
+    try:
+        results = VideosSearch(f"https://www.youtube.com/watch?v={videoid}", limit=1)
+        search = await results.next()
+
+        data = search["result"][0]
+
+        title = data["title"]
+        channel = data["channel"]["name"]
+        duration = data.get("duration", "0:00")
+
+        thumb_url = data["thumbnails"][0]["url"]
+
+    except Exception:
+        return YOUTUBE_IMG_URL
+
+    # download thumbnail
+    raw_path = os.path.join(CACHE_DIR, f"{videoid}.jpg")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(thumb_url) as resp:
+                if resp.status == 200:
+                    async with aiofiles.open(raw_path, "wb") as f:
+                        await f.write(await resp.read())
+                else:
+                    return YOUTUBE_IMG_URL
+    except Exception:
+        return YOUTUBE_IMG_URL
+
+    # render image
+    result = _make_thumb(raw_path, title, channel, duration, player_username, cache_path)
+
+    try:
+        os.remove(raw_path)
+    except:
+        pass
+
+    return result
