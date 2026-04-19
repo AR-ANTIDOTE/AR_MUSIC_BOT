@@ -140,7 +140,7 @@ async def forceclose_command(_, CallbackQuery):
     if CallbackQuery.from_user.id != int(user_id):
         try:
             return await CallbackQuery.answer(
-                "<blockquote expandable><b>» ɪᴛ'ʟʟ ʙᴇ ʙᴇᴛᴛᴇʀ ɪғ ʏᴏᴜ sᴛᴀʏ ɪɴ ʏᴏᴜʀ ʟɪᴍɪᴛs ʙᴀʙʏ.</b></blockquote>", show_alert=True
+                "<blockquote expandable><b>✧ ɪᴛ'ʟʟ ʙᴇ ʙᴇᴛᴛᴇʀ ɪғ ʏᴏᴜ sᴛᴀʏ ɪɴ ʏᴏᴜʀ ʟɪᴍɪᴛs ʙᴀʙʏ.</b></blockquote>", show_alert=True
             )
         except:
             return
@@ -165,7 +165,7 @@ async def forceclose_command(_, CallbackQuery):
 )
 async def shellrunner(_, message: Message):
     if len(message.command) < 2:
-        return await edit_or_reply(message, text="<blockquote expandable><b>ᴇxᴀᴍᴩʟᴇ :</b>\n/sh git pull </blockquote>")
+        return await edit_or_reply(message, text="<blockquote expandable><b>ᴇxᴀᴍᴩʟᴇ :</b>\n\n/sh git pull </blockquote>")
     text = message.text.split(None, 1)[1]
     if "\n" in text:
         code = text.split("\n")
