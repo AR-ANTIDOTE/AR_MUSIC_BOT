@@ -25,31 +25,23 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
 
     # ─────────────
-    # 🎨 BACKGROUND BLUR (🔥 UPDATED)
+    # 🎨 BACKGROUND BLUR
     # ─────────────
     try:
         bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
+        bg = bg.filter(ImageFilter.GaussianBlur(14))
 
-        # 🔥 Strong blur
-        bg = bg.filter(ImageFilter.GaussianBlur(45))
-
-        # 🎨 Color boost (song colors highlight)
-        bg = ImageEnhance.Color(bg).enhance(1.8)
-
-        # 🌑 Dark overlay (glass effect)
-        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 140))
+        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 100))
         bg = Image.alpha_composite(bg, overlay)
 
-        # Merge with template
         base = Image.alpha_composite(bg, base)
-
     except Exception as e:
         print("BG ERROR:", e)
 
     draw = ImageDraw.Draw(base)
 
     # ─────────────
-    # 🎵 ALBUM ART
+    # 🎵 ALBUM ART (FINAL FIXED)
     # ─────────────
     try:
         ART_SIZE = 230
@@ -61,6 +53,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
             (0, 0, ART_SIZE, ART_SIZE), 45, fill=255
         )
 
+        # 👇 FINAL PERFECT POSITION
         art_x = 155
         art_y = 405
 
@@ -70,7 +63,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         print("ART ERROR:", e)
 
     # ─────────────
-    # 📝 TEXT WRAP
+    # 📝 TEXT WRAP (FIXED)
     # ─────────────
     def wrap_text(text, font, max_width):
         words = text.split()
@@ -96,6 +89,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     title = re.sub(r"\W+", " ", title)
 
+    # 👇 TEXT POSITION FIXED
     text_x = 460
     text_y = 400
     max_width = 700
@@ -105,7 +99,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     for i, line in enumerate(lines):
         draw.text((text_x, text_y + i * 50), line, fill="white", font=font_title)
 
-    # channel name
+    # channel
     draw.text(
         (text_x, text_y + len(lines) * 48 + 8),
         channel[:35],
