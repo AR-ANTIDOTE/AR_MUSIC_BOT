@@ -105,101 +105,137 @@ def _font(path: str, size: int) -> ImageFont.FreeTypeFont:
 #  CORE RENDERER
 # ═══════════════════════════════════════════════════════════════════
 def _make_thumb(
-    raw_path:        str,
-    title:           str,
-    channel:         str,
-    duration_text:   str,
+    raw_path: str,
+    title: str,
+    channel: str,
+    duration_text: str,
     player_username: str,
-    cache_path:      str,
+    cache_path: str,
 ) -> str:
+
+    from PIL import Image, ImageDraw, ImageFilter
+
+    W, H = 1280, 720
 
     REG  = "AxiomMusic/assets/font.ttf"
     BOLD = "AxiomMusic/assets/font2.ttf"
 
-    # ── 1. GRADIENT BACKGROUND ───────────────────────────────────
-    # Exact two-tone: BG_TOP at top → BG_BOT at bottom
-    bg   = Image.new("RGBA", (W, H))
-    draw = ImageDraw.Draw(bg)
-    for y in range(H):
-        t = y / (H - 1)
-        r = int(BG_TOP[0] + (BG_BOT[0] - BG_TOP[0]) * t)
-        g = int(BG_TOP[1] + (BG_BOT[1] - BG_TOP[1]) * t)
-        b = int(BG_TOP[2] + (BG_BOT[2] - BG_TOP[2]) * t)
-        draw.line([(0, y), (W, y)], fill=(r, g, b, 255))
+    f_title = _font(BOLD, 34)
+    f_small = _font(REG, 24)
+    f_tiny  = _font(REG, 20)
 
-    # ── 2. WAVE — bottom bump (BG_BOT ellipse, soft edges) ───────
-    # In reference: BG_BOT color forms a smooth elliptical bump
-    # rising from y≈530 right-side to y≈556 left-side
-    wave = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(wave).ellipse(WAVE_ELLIPSE, fill=(*BG_BOT, 255))
-    bg.alpha_composite(wave.filter(ImageFilter.GaussianBlur(32)))
-    draw = ImageDraw.Draw(bg)
-
-    # ── 3. FONTS ─────────────────────────────────────────────────
-    f_label   = _font(REG,  SZ_PLAYING)
-    f_title   = _font(BOLD, SZ_TITLE)
-    f_artist  = _font(BOLD, SZ_ARTIST)
-    f_dur     = _font(REG,  SZ_DURATION)
-    f_brand   = _font(BOLD, SZ_BRAND)
-
-    MAX_W = W - TX - 40  # max text width before ellipsis
-
-    # ── 4. TEXT: "Playing" label ──────────────────────────────────
-    draw.text((TX, TY_LABEL), "Playing", fill=PLAYING_GREY, font=f_label)
-
-    # ── 5. TEXT: Song title (large bold white) ────────────────────
-    draw.text((TX, TY_TITLE), _trim(title, f_title, MAX_W),
-              fill=TEXT_WHITE, font=f_title)
-
-    # ── 6. TEXT: Artist / Channel (medium bold, slightly grey-white)
-    draw.text((TX, TY_ARTIST), _trim(channel, f_artist, MAX_W),
-              fill=ARTIST_GREY, font=f_artist)
-
-    # ── 7. TEXT: Duration ─────────────────────────────────────────
-    draw.text((TX, TY_DUR), f"Duration: {duration_text}",
-              fill=DURATION_GREY, font=f_dur)
-
-    # ── 8. TEXT: "Powered by Maanav" — bottom right, right-aligned ─
-    line1 = "© @AxiomBots"
-    line2 = f"AxiomMusic"
-    l1w   = int(f_brand.getlength(line1))
-    l2w   = int(f_brand.getlength(line2))
-    mbw   = max(l1w, l2w)
-    bx    = W - mbw - 48          # right margin = 48px
-    draw.text((bx + (mbw - l1w), BRAND_Y1), line1, fill=BRAND_GREY, font=f_brand)
-    draw.text((bx + (mbw - l2w), BRAND_Y2), line2, fill=BRAND_GREY, font=f_brand)
-
-    # ── 9. CARD SHADOW ────────────────────────────────────────────
-    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        (CARD_X + 10, CARD_Y + 10, CARD_R + 10, CARD_B + 10),
-        radius=CARD_RAD, fill=(0, 0, 0, 150),
-    )
-    bg.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(14)))
-    draw = ImageDraw.Draw(bg)
-
-    # ── 10. CARD BACKGROUND ───────────────────────────────────────
-    draw.rounded_rectangle(
-        (CARD_X, CARD_Y, CARD_R, CARD_B),
-        radius=CARD_RAD, fill=(*CARD_BG, 255),
-    )
-
-    # ── 11. ALBUM ART inside card ─────────────────────────────────
+    # ───────── BACKGROUND (blurred) ─────────
     try:
-        art_w = CARD_R - CARD_X   # 432px
-        art_h = CARD_B - CARD_Y   # 452px
-        art   = Image.open(raw_path).convert("RGB").resize(
-            (art_w, art_h), Image.LANCZOS
-        )
-        mask = Image.new("L", (art_w, art_h), 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            (0, 0, art_w - 1, art_h - 1), radius=CARD_RAD, fill=255,
-        )
-        bg.paste(art, (CARD_X, CARD_Y), mask)
-    except Exception:
-        pass   # card BG already drawn
+        bg = Image.open(raw_path).convert("RGB").resize((W, H))
+    except:
+        bg = Image.new("RGB", (W, H), (30, 30, 30))
 
-    # ── 12. SAVE ──────────────────────────────────────────────────
+    bg = bg.filter(ImageFilter.GaussianBlur(45))
+
+    # dark overlay
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 140))
+    bg = Image.alpha_composite(bg.convert("RGBA"), overlay)
+
+    draw = ImageDraw.Draw(bg)
+
+    # ───────── ABSTRACT WAVES ─────────
+    waves = Image.new("RGBA", (W, H), (0,0,0,0))
+    wd = ImageDraw.Draw(waves)
+
+    for r in range(120, 260, 30):
+        wd.ellipse((900-r, 200-r, 900+r, 200+r), outline=(255,255,255,60), width=6)
+
+    for r in range(120, 260, 30):
+        wd.ellipse((300-r, 550-r, 300+r, 550+r), outline=(255,255,255,40), width=6)
+
+    bg = Image.alpha_composite(bg, waves)
+
+    # ───────── MAIN CARD ─────────
+    CARD = 420
+    cx, cy = (W - CARD)//2, (H - CARD)//2 - 40
+
+    shadow = Image.new("RGBA", (W, H), (0,0,0,0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        (cx+15, cy+15, cx+CARD+15, cy+CARD+15),
+        radius=40,
+        fill=(0,0,0,180)
+    )
+    bg = Image.alpha_composite(bg, shadow.filter(ImageFilter.GaussianBlur(30)))
+
+    card = Image.new("RGBA", (CARD, CARD), (240,240,240,255))
+    mask = Image.new("L", (CARD, CARD), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0,0,CARD,CARD), radius=40, fill=255)
+    bg.paste(card, (cx, cy), mask)
+
+    # ───────── ALBUM IMAGE ─────────
+    try:
+        art = Image.open(raw_path).convert("RGB").resize((260,260))
+        m = Image.new("L", (260,260), 0)
+        ImageDraw.Draw(m).rounded_rectangle((0,0,260,260), radius=30, fill=255)
+        bg.paste(art, (cx+30, cy+30), m)
+    except:
+        pass
+
+    draw = ImageDraw.Draw(bg)
+
+    # ───────── MUSIC ICON ─────────
+    draw.ellipse((cx+10, cy-30, cx+70, cy+30), fill=(80,80,80))
+    draw.text((cx+28, cy-20), "♪", fill="white", font=f_small)
+
+    # ───────── PILLS ─────────
+    def pill(x, y, text):
+        pad = 16
+        tw = int(f_small.getlength(text))
+        w = tw + pad*2
+        h = 44
+
+        shape = Image.new("RGBA", (w, h), (255,255,255,255))
+        m = Image.new("L", (w, h), 0)
+        ImageDraw.Draw(m).rounded_rectangle((0,0,w,h), radius=20, fill=255)
+        bg.paste(shape, (x,y), m)
+
+        draw.text((x+pad, y+10), text, fill=(0,0,0), font=f_small)
+
+    px = cx + 300
+    py = cy + 70
+
+    pill(px, py, _trim(title, f_small, 180))
+    pill(px, py+65, _trim(channel, f_small, 180))
+    pill(px, py+130, "52M views")
+
+    # ───────── PLAY BUTTON ─────────
+    draw.ellipse((px+120, py-50, px+180, py+10), fill=(0,0,0))
+    draw.polygon(
+        [(px+140, py-35), (px+140, py-5), (px+165, py-20)],
+        fill=(255,255,255)
+    )
+
+    # ───────── MINI PLAYER ─────────
+    bar_w, bar_h = 320, 90
+    bx = cx + (CARD - bar_w)//2
+    by = cy + CARD - 60
+
+    bar = Image.new("RGBA", (bar_w, bar_h), (255,255,255,255))
+    m = Image.new("L", (bar_w, bar_h), 0)
+    ImageDraw.Draw(m).rounded_rectangle((0,0,bar_w,bar_h), radius=30, fill=255)
+    bg.paste(bar, (bx,by), m)
+
+    draw = ImageDraw.Draw(bg)
+
+    # progress
+    draw.line((bx+40, by+25, bx+280, by+25), fill=(180,180,180), width=4)
+    draw.ellipse((bx+120, by+20, bx+132, by+32), fill=(0,0,0))
+
+    # controls
+    draw.text((bx+60, by+45), "⏮", font=f_small, fill=(0,0,0))
+    draw.text((bx+130, by+45), "⏸", font=f_small, fill=(0,0,0))
+    draw.text((bx+200, by+45), "⏭", font=f_small, fill=(0,0,0))
+
+    # time
+    draw.text((bx+35, by+5), "0:00", font=f_tiny, fill=(120,120,120))
+    draw.text((bx+260, by+5), duration_text, font=f_tiny, fill=(120,120,120))
+
+    # ───────── SAVE ─────────
     bg.convert("RGB").save(cache_path, "PNG")
     return cache_path
 
