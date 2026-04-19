@@ -77,7 +77,7 @@ async def overall_stats(client, CallbackQuery, _):
         config.AUTO_LEAVING_ASSISTANT,
         config.DURATION_LIMIT_MIN,
     )
-    med = InputMediaPhoto(media=config.STATS_IMG_URL, caption=text)
+    med = InputMediaPhoto(media=config.STATS_IMG_URL, has_spoiler=True, caption=text)
     try:
         await CallbackQuery.edit_message_media(media=med, reply_markup=upl)
     except MessageIdInvalid:
