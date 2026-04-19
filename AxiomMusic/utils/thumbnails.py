@@ -54,8 +54,8 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         )
 
         # 👇 FINAL PERFECT POSITION
-        art_x = 155
-        art_y = 410
+        art_x = 149
+        art_y = 400
 
         base.paste(art, (art_x, art_y), mask)
 
