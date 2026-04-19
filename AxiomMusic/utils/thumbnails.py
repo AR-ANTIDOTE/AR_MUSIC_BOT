@@ -35,13 +35,13 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         bg = Image.alpha_composite(bg, overlay)
 
         base = Image.alpha_composite(bg, base)
-    except:
-        pass
+    except Exception as e:
+        print("BG ERROR:", e)
 
     draw = ImageDraw.Draw(base)
 
     # ─────────────
-    # 🎵 ALBUM ART (SMALL + FIXED POSITION)
+    # 🎵 ALBUM ART
     # ─────────────
     try:
         ART_SIZE = 180
@@ -53,7 +53,6 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
             (0, 0, ART_SIZE, ART_SIZE), 35, fill=255
         )
 
-        # Position (adjust if needed)
         art_x = 85
         art_y = 355
 
@@ -63,7 +62,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         print("ART ERROR:", e)
 
     # ─────────────
-    # 📝 TITLE WRAP FIX
+    # 📝 TEXT WRAP FIX
     # ─────────────
     def wrap_text(text, font, max_width):
         words = text.split()
@@ -72,7 +71,9 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
         for word in words:
             test = current + " " + word if current else word
-            w, _ = draw.textsize(test, font=font)
+
+            bbox = draw.textbbox((0, 0), test, font=font)
+            w = bbox[2] - bbox[0]
 
             if w <= max_width:
                 current = test
@@ -83,7 +84,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
         if current:
             lines.append(current)
 
-        return lines[:2]  # max 2 lines
+        return lines[:2]
 
     title = re.sub(r"\W+", " ", title)
 
@@ -96,7 +97,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     for i, line in enumerate(lines):
         draw.text((text_x, text_y + i * 55), line, fill="white", font=font_title)
 
-    # Channel name
+    # channel
     draw.text(
         (text_x, text_y + len(lines) * 55 + 10),
         channel[:35],
@@ -105,12 +106,9 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     )
 
     # ─────────────
-    # ❌ REMOVED:
-    # - Progress bar
-    # - Duration text
-    # - Volume %
-    # (Template already has them)
+    # ❌ REMOVED UI
     # ─────────────
+    # (no progress bar, no duration, no volume text)
 
     # ─────────────
     # ✨ FINAL TOUCH
@@ -147,7 +145,8 @@ async def get_thumb(videoid: str, player_username: str = None):
         duration = data.get("duration", "0:00")
         thumb_url = data["thumbnails"][0]["url"]
 
-    except:
+    except Exception as e:
+        print("SEARCH ERROR:", e)
         return YOUTUBE_IMG_URL
 
     raw_path = os.path.join(CACHE_DIR, f"{videoid}.jpg")
@@ -160,12 +159,17 @@ async def get_thumb(videoid: str, player_username: str = None):
                         await f.write(await resp.read())
                 else:
                     return YOUTUBE_IMG_URL
-    except:
+    except Exception as e:
+        print("DOWNLOAD ERROR:", e)
         return YOUTUBE_IMG_URL
 
-    result = _make_thumb(
-        raw_path, title, channel, duration, player_username, cache_path
-    )
+    try:
+        result = _make_thumb(
+            raw_path, title, channel, duration, player_username, cache_path
+        )
+    except Exception as e:
+        print("THUMB ERROR:", e)
+        return YOUTUBE_IMG_URL
 
     if os.path.exists(raw_path):
         os.remove(raw_path)
