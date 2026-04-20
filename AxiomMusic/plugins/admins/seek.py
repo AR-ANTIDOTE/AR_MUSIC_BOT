@@ -112,8 +112,8 @@ async def check_callback_admin(client, callback_query: CallbackQuery):
     await callback_query.answer("<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴍᴀɴᴀɢᴇ ᴠɪᴅᴇᴏ ᴄʜᴀᴛ's\n\nʀᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs ᴄᴀᴄʜᴇ ᴠɪᴀ : /reload </b></blockquote>", show_alert=True)
     return False
 
-@app.on_callback_query(filters.regex("forward_20"))
-async def seek_forward_20_cb(client, callback_query: CallbackQuery):
+@app.on_callback_query(filters.regex("forward_25"))
+async def seek_forward_25_cb(client, callback_query: CallbackQuery):
     if not await check_callback_admin(client, callback_query):
         return
 
@@ -130,7 +130,7 @@ async def seek_forward_20_cb(client, callback_query: CallbackQuery):
             await callback_query.answer("<blockquote expandable><b>✧ ᴄᴀɴ'ᴛ sᴇᴇᴋ ɪɴ ʟɪᴠᴇ sᴛʀᴇᴀᴍs! </b></blockquote>", show_alert=True)
             return
 
-        duration_to_skip = 20
+        duration_to_skip = 25
         duration_played = int(playing[0]["played"])
         duration = playing[0]["dur"]
         file_path = playing[0]["file"]
@@ -162,14 +162,14 @@ async def seek_forward_20_cb(client, callback_query: CallbackQuery):
         )
 
         db[chat_id][0]["played"] += duration_to_skip
-        await callback_query.answer(f"<blockquote expandable><b>✧ sᴛʀᴇᴀᴍ sᴜᴄᴄᴇssғᴜʟʟʏ sᴇᴇᴋᴇᴅ — 20 sᴇᴄᴏɴᴅ's </b></blockquote>!")
+        await callback_query.answer(f"<blockquote expandable><b>✧ sᴛʀᴇᴀᴍ sᴜᴄᴄᴇssғᴜʟʟʏ sᴇᴇᴋᴇᴅ — 25 sᴇᴄᴏɴᴅ's </b></blockquote>!")
 
     except Exception as e:
-        print(f"Error in seek_forward_20_cb: {e}")
+        print(f"Error in seek_forward_25_cb: {e}")
         await callback_query.answer("<blockquote expandable><b>🚫 ғᴀɪʟᴇᴅ ᴛᴏ sᴇᴇᴋ ғᴏʀᴡᴀʀᴅ! </b></blockquote>", show_alert=True)
 
-@app.on_callback_query(filters.regex("backward_20"))
-async def seek_backward_20_cb(client, callback_query: CallbackQuery):
+@app.on_callback_query(filters.regex("backward_25"))
+async def seek_backward_25_cb(client, callback_query: CallbackQuery):
     if not await check_callback_admin(client, callback_query):
         return
 
@@ -186,7 +186,7 @@ async def seek_backward_20_cb(client, callback_query: CallbackQuery):
             await callback_query.answer("<blockquote expandable><b>✧ ᴄᴀɴ'ᴛ sᴇᴇᴋ ɪɴ ʟɪᴠᴇ sᴛʀᴇᴀᴍ's! </b></blockquote>", show_alert=True)
             return
 
-        duration_to_skip = 20
+        duration_to_skip = 25
         duration_played = int(playing[0]["played"])
         duration = playing[0]["dur"]
         file_path = playing[0]["file"]
@@ -218,8 +218,8 @@ async def seek_backward_20_cb(client, callback_query: CallbackQuery):
         )
 
         db[chat_id][0]["played"] -= duration_to_skip
-        await callback_query.answer(f"<blockquote expandable><b>✧ sᴛʀᴇᴀᴍ sᴜᴄᴄᴇssғᴜʟʟʏ sᴇᴇᴋᴇᴅ ʙᴀᴄᴋ 20 sᴇᴄᴏɴᴅ's </b></blockquote>")
+        await callback_query.answer(f"<blockquote expandable><b>✧ sᴛʀᴇᴀᴍ sᴜᴄᴄᴇssғᴜʟʟʏ sᴇᴇᴋᴇᴅ ʙᴀᴄᴋ 25 sᴇᴄᴏɴᴅ's </b></blockquote>")
 
     except Exception as e:
-        print(f"Error in seek_backward_20_cb: {e}")
+        print(f"Error in seek_backward_25_cb: {e}")
         await callback_query.answer("<blockquote expandable><b>🚫 ғᴀɪʟᴇᴅ ᴛᴏ sᴇᴇᴋ ʙᴀᴄᴋᴡᴀʀᴅ! </b></blockquote>", show_alert=True)
