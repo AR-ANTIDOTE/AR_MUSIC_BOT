@@ -10,8 +10,8 @@ from AxiomMusic import app
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# 💜 Purple accent (same as your sample)
-ACCENT = (160, 140, 255)
+# 🎨 PURPLE ACCENT (same as your sample)
+ACCENT = (170, 150, 255)
 
 
 def rounded_mask(size, radius):
@@ -29,23 +29,23 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     WIDTH, HEIGHT = 1280, 720
     base = Image.new("RGB", (WIDTH, HEIGHT), (15, 25, 30))
 
-    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 42)
-    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
+    # 🔻 TEXT SIZE THODA CHHOTA
+    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 38)
+    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 24)
 
     # ─────────────
-    # 🌌 BACKGROUND (cinematic blur + glow)
+    # 🌌 BACKGROUND
     # ─────────────
     bg = Image.open(raw_path).convert("RGB").resize((WIDTH, HEIGHT), Image.LANCZOS)
-    bg = bg.filter(ImageFilter.GaussianBlur(40))
+    bg = bg.filter(ImageFilter.GaussianBlur(35))
 
-    overlay = Image.new("RGB", (WIDTH, HEIGHT), (20, 40, 60))
-    bg = Image.blend(bg, overlay, 0.5)
+    overlay = Image.new("RGB", (WIDTH, HEIGHT), (0, 60, 70))
+    bg = Image.blend(bg, overlay, 0.4)
 
-    # light glow center
     glow = Image.new("L", (WIDTH, HEIGHT), 0)
-    g = ImageDraw.Draw(glow)
-    g.ellipse((200, 100, 1100, 650), fill=255)
-    glow = glow.filter(ImageFilter.GaussianBlur(220))
+    gdraw = ImageDraw.Draw(glow)
+    gdraw.ellipse((200, 100, 1100, 650), fill=255)
+    glow = glow.filter(ImageFilter.GaussianBlur(200))
 
     light = Image.new("RGB", (WIDTH, HEIGHT), (255, 255, 255))
     bg = Image.composite(light, bg, glow)
@@ -56,71 +56,74 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     draw = ImageDraw.Draw(base)
 
     # ─────────────
-    # 🎬 THUMB (radius 50 + shadow)
+    # 🎬 THUMB + PERFECT SHADOW (FIXED)
     # ─────────────
     thumb = Image.open(raw_path).resize((800, 400), Image.LANCZOS)
     thumb = ImageEnhance.Sharpness(thumb).enhance(1.3)
 
-    x, y = 250, 120
+    thumb_x, thumb_y = 250, 120
+    RADIUS = 50  # 👈 SAME EVERYWHERE
 
-    # shadow
+    # ✅ SHADOW WITH SAME RADIUS (FIXED)
     shadow = Image.new("RGBA", (860, 460), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle((20, 20, 840, 440), 50, fill=(0, 0, 0, 140))
+    sdraw = ImageDraw.Draw(shadow)
+    sdraw.rounded_rectangle(
+        (30, 30, 830, 430),
+        RADIUS,
+        fill=(0, 0, 0, 140)
+    )
     shadow = shadow.filter(ImageFilter.GaussianBlur(25))
-    base.paste(shadow, (x-30, y-30), shadow)
 
-    # rounded thumb (🔥 radius = 50)
-    mask = rounded_mask((800, 400), 50)
-    base.paste(thumb, (x, y), mask)
+    base.paste(shadow, (thumb_x-30, thumb_y-30), shadow)
+
+    # thumbnail
+    mask = rounded_mask((800, 400), RADIUS)
+    base.paste(thumb, (thumb_x, thumb_y), mask)
 
     # ─────────────
-    # 💜 BORDER (glow like sample)
+    # 🔲 BORDER (GLOW)
     # ─────────────
-    box = (x, y, x + 800, y + 400)
+    box = (thumb_x, thumb_y, thumb_x + 800, thumb_y + 400)
 
-    # glow layers
-    for i in range(8):
+    for i in range(6):
         draw.rounded_rectangle(
             (box[0]-i, box[1]-i, box[2]+i, box[3]+i),
-            radius=50,
-            outline=(ACCENT[0], ACCENT[1], ACCENT[2], 30),
+            radius=RADIUS,
+            outline=(ACCENT[0], ACCENT[1], ACCENT[2], 40),
             width=2
         )
 
-    # main border
-    draw.rounded_rectangle(box, radius=50, outline=ACCENT, width=3)
+    draw.rounded_rectangle(box, radius=RADIUS, outline=ACCENT, width=3)
 
     # ─────────────
     # ⏱️ PROGRESS BAR
     # ─────────────
     try:
-        m, s = map(int, duration_text.split(":"))
-        total_sec = m * 60 + s
+        parts = duration_text.split(":")
+        total_sec = int(parts[0]) * 60 + int(parts[1])
     except:
         total_sec = 100
 
     current_sec = int(total_sec * 0.15)
 
-    bar_x = 130
-    top, bottom = 100, 620
+    bar_x = 140
+    top = 100
+    bottom = 620
 
-    draw.line((bar_x, top, bar_x, bottom),
-              fill=(200, 200, 200, 100), width=4)
+    draw.line((bar_x, top, bar_x, bottom), fill=(200, 200, 200, 120), width=4)
 
-    py = bottom - int((bottom-top) * (current_sec/total_sec))
+    progress_y = bottom - int((bottom - top) * (current_sec / total_sec))
 
-    draw.line((bar_x, py, bar_x, bottom),
-              fill=ACCENT, width=4)
+    draw.line((bar_x, progress_y, bar_x, bottom), fill=ACCENT, width=4)
 
-    # 🔵 glowing dot
-    for i in range(4):
+    # glowing dot
+    for i in range(3):
         draw.ellipse(
-            (bar_x-8-i, py-8-i, bar_x+8+i, py+8+i),
+            (bar_x-8-i, progress_y-8-i, bar_x+8+i, progress_y+8+i),
             fill=(ACCENT[0], ACCENT[1], ACCENT[2], 40)
         )
 
-    draw.ellipse((bar_x-6, py-6, bar_x+6, py+6), fill=ACCENT)
+    draw.ellipse((bar_x-6, progress_y-6, bar_x+6, progress_y+6), fill=ACCENT)
 
     # ─────────────
     # 🕒 TIME
@@ -128,51 +131,59 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     def fmt(sec):
         return f"{sec//60:02}:{sec%60:02}"
 
-    draw.text((70, 60), fmt(current_sec), fill=ACCENT, font=font_artist)
-    draw.text((70, 640), duration_text, fill=ACCENT, font=font_artist)
+    draw.text((85, 60), fmt(current_sec), fill=ACCENT, font=font_artist)
+    draw.text((85, 640), duration_text, fill=ACCENT, font=font_artist)
 
     # ─────────────
-    # 📝 TEXT
+    # 📝 TEXT (SMALL + DOWN SHIFT)
     # ─────────────
-    def wrap(text):
+    def wrap_text(text, font, max_width):
         words = text.split()
-        lines, cur = [], ""
-        for w in words:
-            test = cur + " " + w if cur else w
-            if draw.textlength(test, font=font_title) < 700:
-                cur = test
+        lines = []
+        current = ""
+
+        for word in words:
+            test = current + " " + word if current else word
+            if draw.textlength(test, font=font) <= max_width:
+                current = test
             else:
-                lines.append(cur)
-                cur = w
-        lines.append(cur)
+                lines.append(current)
+                current = word
+
+        if current:
+            lines.append(current)
+
         return lines[:2]
 
     title = re.sub(r"\W+", " ", title)
 
-    tx, ty = 300, 540
+    # 🔻 TEXT KO THODA NEECHAY SHIFT
+    text_x = 300
+    text_y = 580
 
-    for i, line in enumerate(wrap(title)):
-        draw.text((tx, ty + i*50), line, fill="white", font=font_title)
+    lines = wrap_text(title, font_title, 700)
 
-    draw.text((tx, ty + 110),
-              channel[:35],
-              fill=(200, 200, 200),
-              font=font_artist)
+    for i, line in enumerate(lines):
+        draw.text((text_x, text_y + i * 45), line, fill="white", font=font_title)
 
-    # 👇 DEV TEXT
-    draw.text((1020, 650),
-              "Dev :- Maanav",
-              fill=(220, 220, 220),
-              font=font_artist)
+    draw.text(
+        (text_x, text_y + len(lines) * 45 + 5),
+        channel[:35],
+        fill=(200, 200, 200),
+        font=font_artist,
+    )
 
-    base = ImageEnhance.Contrast(base).enhance(1.08)
+    # DEV TEXT
+    draw.text((1020, 650), "Dev :- Maanav", fill=(220, 220, 220), font=font_artist)
+
+    base = ImageEnhance.Contrast(base).enhance(1.05)
     base.save(cache_path, quality=95)
 
     return cache_path
 
 
 # ─────────────────────────────
-# 🚀 MAIN FUNCTION (FIXED)
+# 🚀 MAIN FUNCTION
 # ─────────────────────────────
 async def get_thumb(videoid: str, player_username: str = None):
 
