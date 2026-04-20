@@ -2,7 +2,7 @@ import os
 import re
 import aiohttp
 import aiofiles
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 from py_yt import VideosSearch
 from config import YOUTUBE_IMG_URL
 from AxiomMusic import app
@@ -10,7 +10,7 @@ from AxiomMusic import app
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-ACCENT = (170, 150, 255)  # purple tone
+ACCENT = (170, 150, 255)  # purple
 
 
 def rounded_mask(size, radius):
@@ -24,39 +24,43 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     WIDTH, HEIGHT = 1280, 720
 
-    # 📌 TEMPLATE LOAD (your uploaded one)
+    # TEMPLATE LOAD
     base = Image.open("AxiomMusic/assets/template.png").convert("RGB")
     base = base.resize((WIDTH, HEIGHT))
 
     draw = ImageDraw.Draw(base)
 
-    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 38)
-    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 32)
+    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 36)
+    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 34)
 
     # ─────────────
-    # 🎬 THUMB (FIT + LESS RADIUS)
+    # 🎬 THUMB FIXED
     # ─────────────
-    thumb = Image.open(raw_path).resize((760, 410), Image.LANCZOS)
+    thumb_w, thumb_h = 760, 360
+    thumb = Image.open(raw_path).resize((thumb_w, thumb_h), Image.LANCZOS)
 
-    # 📌 position tuned to your template
     thumb_x, thumb_y = 300, 135
 
-    # ❗ radius reduced (50 → 30)
-    radius = 25
-# soft glow (no rectangle look)
-    glow = Image.new("RGBA", (760, 360), (0, 0, 0, 0))
+    radius = 28
+
+    # ONLY soft glow (no rectangle shadow issue)
+    glow = Image.new("RGBA", (thumb_w, thumb_h), (0, 0, 0, 0))
     gdraw = ImageDraw.Draw(glow)
-    gdraw.rounded_rectangle((0, 0, 760, 360), radius, fill=(0, 0, 0, 60))
-    glow = glow.filter(ImageFilter.GaussianBlur(25))
+    gdraw.rounded_rectangle(
+        (0, 0, thumb_w, thumb_h),
+        radius,
+        fill=(0, 0, 0, 80)
+    )
+    glow = glow.filter(ImageFilter.GaussianBlur(20))
 
     base.paste(glow, (thumb_x, thumb_y), glow)
 
-    # thumb paste
-    mask = rounded_mask((760, 360), radius)
+    # PERFECT MASK MATCH
+    mask = rounded_mask((thumb_w, thumb_h), radius)
     base.paste(thumb, (thumb_x, thumb_y), mask)
 
     # ─────────────
-    # ⏱️ TIME TEXT (BIGGER + TEMPLATE COLOR)
+    # ⏱️ TIME TEXT
     # ─────────────
     def fmt(sec):
         return f"{sec//60:02}:{sec%60:02}"
@@ -69,7 +73,6 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     current_sec = int(total_sec * 0.15)
 
-    # 📌 positions adjusted to template
     draw.text((70, 70), fmt(current_sec), fill=ACCENT, font=font_artist)
     draw.text((70, 640), duration_text, fill=ACCENT, font=font_artist)
 
@@ -82,7 +85,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
         for w in words:
             test = cur + " " + w if cur else w
-            if draw.textlength(test, font=font_title) < 700:
+            if draw.textlength(test, font=font_title) < 720:
                 cur = test
             else:
                 lines.append(cur)
@@ -93,21 +96,19 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     title = re.sub(r"\W+", " ", title)
 
-    text_x, text_y = 300, 560  # 👈 thoda niche
+    text_x, text_y = 300, 560
 
     for i, line in enumerate(wrap(title)):
-        draw.text((text_x, text_y + i * 48), line, fill="white", font=font_title)
+        draw.text((text_x, text_y + i * 45), line, fill="white", font=font_title)
 
     draw.text(
-        (text_x, text_y + 100),
+        (text_x, text_y + 95),
         channel[:35],
         fill=(200, 200, 200),
         font=font_artist,
     )
 
-    # ─────────────
-    # 🏷️ DEV TEXT
-    # ─────────────
+    # DEV TEXT
     draw.text((1020, 650), "Dev :- Maanav", fill=(200, 200, 200), font=font_artist)
 
     base.save(cache_path, quality=95)
