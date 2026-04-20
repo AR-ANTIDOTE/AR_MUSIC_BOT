@@ -10,7 +10,7 @@ from AxiomMusic import app
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-# 🎯 PURPLE UI (same as your sample)
+# 💜 Purple accent (same as your sample)
 ACCENT = (160, 140, 255)
 
 
@@ -21,6 +21,9 @@ def rounded_mask(size, radius):
     return mask
 
 
+# ─────────────────────────────
+# 🎨 THUMB RENDER
+# ─────────────────────────────
 def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_path):
 
     WIDTH, HEIGHT = 1280, 720
@@ -30,16 +33,15 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
 
     # ─────────────
-    # 🌌 CINEMATIC BACKGROUND (EXACT STYLE)
+    # 🌌 BACKGROUND (cinematic blur + glow)
     # ─────────────
     bg = Image.open(raw_path).convert("RGB").resize((WIDTH, HEIGHT), Image.LANCZOS)
-
     bg = bg.filter(ImageFilter.GaussianBlur(40))
 
-    overlay = Image.new("RGB", (WIDTH, HEIGHT), (0, 50, 65))
-    bg = Image.blend(bg, overlay, 0.45)
+    overlay = Image.new("RGB", (WIDTH, HEIGHT), (20, 40, 60))
+    bg = Image.blend(bg, overlay, 0.5)
 
-    # center glow
+    # light glow center
     glow = Image.new("L", (WIDTH, HEIGHT), 0)
     g = ImageDraw.Draw(glow)
     g.ellipse((200, 100, 1100, 650), fill=255)
@@ -49,83 +51,59 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     bg = Image.composite(light, bg, glow)
 
     bg = ImageEnhance.Brightness(bg).enhance(0.7)
-
     base.paste(bg, (0, 0))
-    draw = ImageDraw.Draw(base)
-
-    # ─────────────
-    # 🧊 GLASS CARD
-    # ─────────────
-    card = bg.crop((200, 80, 1080, 620)).filter(ImageFilter.GaussianBlur(25))
-
-    glass = Image.new("RGBA", card.size, (255, 255, 255, 25))
-    card = Image.alpha_composite(card.convert("RGBA"), glass)
-
-    # shadow
-    shadow = Image.new("RGBA", (card.size[0]+40, card.size[1]+40), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle((20, 20, card.size[0]+20, card.size[1]+20),
-                         50, fill=(0, 0, 0, 140))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(30))
-
-    base.paste(shadow, (180, 60), shadow)
-
-    mask = rounded_mask(card.size, 50)
-    base.paste(card, (200, 80), mask)
 
     draw = ImageDraw.Draw(base)
 
     # ─────────────
-    # 🎬 THUMB (RADIUS = 50 🔥)
+    # 🎬 THUMB (radius 50 + shadow)
     # ─────────────
-    thumb = Image.open(raw_path).resize((760, 380), Image.LANCZOS)
+    thumb = Image.open(raw_path).resize((800, 400), Image.LANCZOS)
     thumb = ImageEnhance.Sharpness(thumb).enhance(1.3)
 
-    tx, ty = 240, 120
+    x, y = 250, 120
 
     # shadow
-    tshadow = Image.new("RGBA", (780, 400), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(tshadow)
-    sd.rounded_rectangle((10, 10, 770, 390),
-                         50, fill=(0, 0, 0, 150))
-    tshadow = tshadow.filter(ImageFilter.GaussianBlur(25))
+    shadow = Image.new("RGBA", (860, 460), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    sd.rounded_rectangle((20, 20, 840, 440), 50, fill=(0, 0, 0, 140))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(25))
+    base.paste(shadow, (x-30, y-30), shadow)
 
-    base.paste(tshadow, (tx-10, ty-10), tshadow)
-
-    tmask = rounded_mask((760, 380), 50)  # 👈 RADIUS 50
-    base.paste(thumb, (tx, ty), tmask)
+    # rounded thumb (🔥 radius = 50)
+    mask = rounded_mask((800, 400), 50)
+    base.paste(thumb, (x, y), mask)
 
     # ─────────────
-    # 🔮 PURPLE GLOW BORDER
+    # 💜 BORDER (glow like sample)
     # ─────────────
+    box = (x, y, x + 800, y + 400)
+
+    # glow layers
     for i in range(8):
         draw.rounded_rectangle(
-            (tx-i, ty-i, tx+760+i, ty+380+i),
+            (box[0]-i, box[1]-i, box[2]+i, box[3]+i),
             radius=50,
             outline=(ACCENT[0], ACCENT[1], ACCENT[2], 30),
             width=2
         )
 
-    draw.rounded_rectangle(
-        (tx, ty, tx+760, ty+380),
-        radius=50,
-        outline=ACCENT,
-        width=3
-    )
+    # main border
+    draw.rounded_rectangle(box, radius=50, outline=ACCENT, width=3)
 
     # ─────────────
-    # ⏱️ PROGRESS BAR (WITH GLOW DOT)
+    # ⏱️ PROGRESS BAR
     # ─────────────
     try:
-        parts = duration_text.split(":")
-        total_sec = int(parts[0]) * 60 + int(parts[1])
+        m, s = map(int, duration_text.split(":"))
+        total_sec = m * 60 + s
     except:
         total_sec = 100
 
     current_sec = int(total_sec * 0.15)
 
     bar_x = 130
-    top, bottom = 110, 610
+    top, bottom = 100, 620
 
     draw.line((bar_x, top, bar_x, bottom),
               fill=(200, 200, 200, 100), width=4)
@@ -135,7 +113,7 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     draw.line((bar_x, py, bar_x, bottom),
               fill=ACCENT, width=4)
 
-    # glow dot
+    # 🔵 glowing dot
     for i in range(4):
         draw.ellipse(
             (bar_x-8-i, py-8-i, bar_x+8+i, py+8+i),
@@ -150,8 +128,8 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
     def fmt(sec):
         return f"{sec//60:02}:{sec%60:02}"
 
-    draw.text((80, 60), fmt(current_sec), fill=ACCENT, font=font_artist)
-    draw.text((80, 640), duration_text, fill=ACCENT, font=font_artist)
+    draw.text((70, 60), fmt(current_sec), fill=ACCENT, font=font_artist)
+    draw.text((70, 640), duration_text, fill=ACCENT, font=font_artist)
 
     # ─────────────
     # 📝 TEXT
@@ -171,18 +149,17 @@ def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_
 
     title = re.sub(r"\W+", " ", title)
 
-    tx2, ty2 = 300, 540
+    tx, ty = 300, 540
 
     for i, line in enumerate(wrap(title)):
-        draw.text((tx2, ty2 + i*50), line,
-                  fill="white", font=font_title)
+        draw.text((tx, ty + i*50), line, fill="white", font=font_title)
 
-    draw.text((tx2, ty2 + 110),
+    draw.text((tx, ty + 110),
               channel[:35],
               fill=(200, 200, 200),
               font=font_artist)
 
-    # DEV TEXT
+    # 👇 DEV TEXT
     draw.text((1020, 650),
               "Dev :- Maanav",
               fill=(220, 220, 220),
