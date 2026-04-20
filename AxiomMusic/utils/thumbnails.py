@@ -1,174 +1,160 @@
 import os
-import re
+import math
 import aiohttp
 import aiofiles
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
-from py_yt import VideosSearch
-from config import YOUTUBE_IMG_URL
-from AxiomMusic import app
+
+# ================= CONFIG ================= #
 
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
+FONT_BOLD = "arial.ttf"
+FONT_REG = "arial.ttf"
 
-# ─────────────────────────────
-# 🎨 THUMBNAIL RENDER
-# ─────────────────────────────
-def _make_thumb(raw_path, title, channel, duration_text, player_username, cache_path):
+WIDTH = 1280
+HEIGHT = 720
 
-    base = Image.open("AxiomMusic/assets/template.png").convert("RGBA")
-    WIDTH, HEIGHT = base.size
+PINK = (255, 0, 150)
+
+# ========================================== #
+
+# ---------- DOWNLOAD IMAGE ---------- #
+async def download_image(url, path):
+    if os.path.exists(path):
+        return path
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                f = await aiofiles.open(path, mode="wb")
+                await f.write(await resp.read())
+                await f.close()
+    return path
+
+
+# ---------- TIME FORMAT ---------- #
+def format_time(seconds: int):
+    m = int(seconds // 60)
+    s = int(seconds % 60)
+    return f"{m:02}:{s:02}"
+
+
+# ---------- NEON BORDER ---------- #
+def draw_neon(draw, box, radius=30):
+    x1, y1, x2, y2 = box
+
+    # glow layers
+    for i in range(12):
+        draw.rounded_rectangle(
+            [x1 - i, y1 - i, x2 + i, y2 + i],
+            radius=radius,
+            outline=(PINK[0], PINK[1], PINK[2], 25),
+            width=2
+        )
+
+    # main border
+    draw.rounded_rectangle(box, radius=radius, outline=PINK, width=4)
+
+
+# ---------- PROGRESS BAR ---------- #
+def draw_progress(draw, x, top, bottom, progress):
+    # background
+    draw.line((x, top, x, bottom), fill=(180, 180, 180, 80), width=6)
+
+    # current point
+    current_y = bottom - int((bottom - top) * progress)
+
+    # progress fill
+    draw.line((x, current_y, x, bottom), fill=PINK, width=6)
+
+    # glowing dot
+    draw.ellipse((x - 10, current_y - 10, x + 10, current_y + 10), fill=PINK)
+
+
+# ---------- DP CIRCLE ---------- #
+def add_circle_dp(base, dp_path):
+    try:
+        dp = Image.open(dp_path).convert("RGB").resize((80, 80))
+
+        mask = Image.new("L", (80, 80), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, 80, 80), fill=255)
+
+        dp.putalpha(mask)
+
+        base.paste(dp, (260, 420), dp)
+    except:
+        pass
+
+
+# ---------- MAIN FUNCTION ---------- #
+async def generate_thumbnail(
+    title: str,
+    channel: str,
+    views: str,
+    duration: int,
+    current: int,
+    thumb_url: str,
+    dp_url: str = None,
+    output: str = "final.png"
+):
+
+    thumb_path = os.path.join(CACHE_DIR, "thumb.jpg")
+    dp_path = os.path.join(CACHE_DIR, "dp.png")
+
+    await download_image(thumb_url, thumb_path)
+
+    if dp_url:
+        await download_image(dp_url, dp_path)
+
+    # ---------- BASE ---------- #
+    base = Image.new("RGB", (WIDTH, HEIGHT), (10, 20, 25))
+
+    # ---------- BACKGROUND BLUR ---------- #
+    bg = Image.open(thumb_path).resize((WIDTH, HEIGHT))
+    bg = bg.filter(ImageFilter.GaussianBlur(30))
+    enhancer = ImageEnhance.Brightness(bg)
+    bg = enhancer.enhance(0.4)
+
+    base.paste(bg, (0, 0))
+
     draw = ImageDraw.Draw(base)
 
-    # Fonts
-    font_title = ImageFont.truetype("AxiomMusic/assets/font2.ttf", 44)
-    font_artist = ImageFont.truetype("AxiomMusic/assets/font.ttf", 28)
+    # ---------- MAIN THUMB ---------- #
+    thumb = Image.open(thumb_path).resize((800, 400))
+    base.paste(thumb, (250, 120))
 
-    # ─────────────
-    # 🎨 BACKGROUND BLUR
-    # ─────────────
+    box = (250, 120, 1050, 520)
+
+    draw_neon(draw, box)
+
+    # ---------- PROGRESS ---------- #
+    progress = current / duration if duration else 0
+    draw_progress(draw, 120, 100, 620, progress)
+
+    # ---------- FONTS ---------- #
     try:
-        bg = Image.open(raw_path).convert("RGBA").resize((WIDTH, HEIGHT))
-        bg = bg.filter(ImageFilter.GaussianBlur(14))
+        font_title = ImageFont.truetype(FONT_BOLD, 42)
+        font_small = ImageFont.truetype(FONT_REG, 28)
+    except:
+        font_title = ImageFont.load_default()
+        font_small = ImageFont.load_default()
 
-        overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 100))
-        bg = Image.alpha_composite(bg, overlay)
+    # ---------- TEXT ---------- #
+    title = title[:45]
 
-        base = Image.alpha_composite(bg, base)
-    except Exception as e:
-        print("BG ERROR:", e)
+    draw.text((300, 550), title, font=font_title, fill="white")
+    draw.text((300, 600), f"{channel} | {views}", font=font_small, fill=(180, 180, 180))
 
-    draw = ImageDraw.Draw(base)
+    # ---------- TIME ---------- #
+    draw.text((50, 60), format_time(current), font=font_small, fill=PINK)
+    draw.text((50, 640), format_time(duration), font=font_small, fill=PINK)
 
-    # ─────────────
-    # 🎵 ALBUM ART (FINAL FIXED)
-    # ─────────────
-    try:
-        ART_SIZE = 230
+    # ---------- DP ---------- #
+    if dp_url:
+        add_circle_dp(base, dp_path)
 
-        art = Image.open(raw_path).resize((ART_SIZE, ART_SIZE))
-
-        mask = Image.new("L", (ART_SIZE, ART_SIZE), 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            (0, 0, ART_SIZE, ART_SIZE), 45, fill=255
-        )
-
-        # 👇 FINAL PERFECT POSITION
-        art_x = 155
-        art_y = 405
-
-        base.paste(art, (art_x, art_y), mask)
-
-    except Exception as e:
-        print("ART ERROR:", e)
-
-    # ─────────────
-    # 📝 TEXT WRAP (FIXED)
-    # ─────────────
-    def wrap_text(text, font, max_width):
-        words = text.split()
-        lines = []
-        current = ""
-
-        for word in words:
-            test = current + " " + word if current else word
-
-            bbox = draw.textbbox((0, 0), test, font=font)
-            w = bbox[2] - bbox[0]
-
-            if w <= max_width:
-                current = test
-            else:
-                lines.append(current)
-                current = word
-
-        if current:
-            lines.append(current)
-
-        return lines[:2]
-
-    title = re.sub(r"\W+", " ", title)
-
-    # 👇 TEXT POSITION FIXED
-    text_x = 460
-    text_y = 400
-    max_width = 700
-
-    lines = wrap_text(title, font_title, max_width)
-
-    for i, line in enumerate(lines):
-        draw.text((text_x, text_y + i * 50), line, fill="white", font=font_title)
-
-    # channel
-    draw.text(
-        (text_x, text_y + len(lines) * 48 + 8),
-        channel[:35],
-        fill=(200, 200, 200),
-        font=font_artist,
-    )
-
-    # ─────────────
-    # ✨ FINAL TOUCH
-    # ─────────────
-    base = ImageEnhance.Contrast(base).enhance(1.05)
-    base = ImageEnhance.Sharpness(base).enhance(1.25)
-
-    base.convert("RGB").save(cache_path)
-
-    return cache_path
-
-
-# ─────────────────────────────
-# 🚀 MAIN FUNCTION
-# ─────────────────────────────
-async def get_thumb(videoid: str, player_username: str = None):
-
-    if player_username is None:
-        player_username = app.username
-
-    cache_path = os.path.join(CACHE_DIR, f"{videoid}.png")
-    if os.path.exists(cache_path):
-        return cache_path
-
-    try:
-        results = VideosSearch(
-            f"https://www.youtube.com/watch?v={videoid}", limit=1
-        )
-        search = await results.next()
-        data = search["result"][0]
-
-        title = data["title"]
-        channel = data["channel"]["name"]
-        duration = data.get("duration", "0:00")
-        thumb_url = data["thumbnails"][0]["url"]
-
-    except Exception as e:
-        print("SEARCH ERROR:", e)
-        return YOUTUBE_IMG_URL
-
-    raw_path = os.path.join(CACHE_DIR, f"{videoid}.jpg")
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(thumb_url) as resp:
-                if resp.status == 200:
-                    async with aiofiles.open(raw_path, "wb") as f:
-                        await f.write(await resp.read())
-                else:
-                    return YOUTUBE_IMG_URL
-    except Exception as e:
-        print("DOWNLOAD ERROR:", e)
-        return YOUTUBE_IMG_URL
-
-    try:
-        result = _make_thumb(
-            raw_path, title, channel, duration, player_username, cache_path
-        )
-    except Exception as e:
-        print("THUMB ERROR:", e)
-        return YOUTUBE_IMG_URL
-
-    if os.path.exists(raw_path):
-        os.remove(raw_path)
-
-    return result
+    # ---------- SAVE ---------- #
+    base.save(output)
+    return output
