@@ -166,10 +166,10 @@ async def get_thumb(videoid: str, user_id=None) -> str:
     base = _draw_bar(base, 105, 93, 556, 0.06, c_base, c_light, c_dark)
 
     draw = ImageDraw.Draw(base)
-    f_t   = _get_font(FONT_BOLD,   50)
-    f_tit = _get_font(FONT_BOLD,   60)
+    f_t   = _get_font(FONT_BOLD,   30)
+    f_tit = _get_font(FONT_BOLD,   44)
     f_s   = _get_font(FONT_NORMAL, 30)
-    f_wm  = _get_font(FONT_BOLD,   35)
+    f_wm  = _get_font(FONT_BOLD,   24)
 
     draw.text((105, 44),  duration,                                                  font=f_t,   fill=c_base,     anchor="mm")
     draw.text((105, 598), "00:25",                                                   font=f_t,   fill=c_base,     anchor="mm")
