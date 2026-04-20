@@ -136,7 +136,7 @@ cplay_5 : "<blockquote expandable><b>✧ ᴏɴʟʏ ᴄʜᴀɴɴᴇʟs ᴀʀᴇ s
 cplay_6 : "<blockquote expandable><b>✧ ʏᴏᴜ ɴᴇᴇᴅ ᴛᴏ ʙᴇ ᴛʜᴇ ᴏᴡɴᴇʀ ᴏғ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ {0} ᴛᴏ ᴄᴏɴɴᴇᴄᴛ ɪᴛ ᴡɪᴛʜ ᴛʜɪs ɢʀᴏᴜᴘ.\n✧ ᴄʜᴀɴɴᴇʟ's ᴏᴡɴᴇʀ : @{1}\n\n✧ ᴀʟᴛᴇʀɴᴀᴛɪᴠᴇʟʏ ʏᴏᴜ ᴄᴀɴ ʟɪɴᴋ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴛᴏ ᴛʜᴀᴛ ᴄʜᴀɴɴᴇʟ ᴀɴᴅ ᴛʜᴇɴ ᴛʀʏ ᴄᴏɴɴɴᴇᴄᴛɪɴɢ ᴡɪᴛʜ <code>/channelplay linked</code> </b></blockquote>"
 cplay_7 : "<blockquote expandable><b>✧ ᴄʜᴀɴɴᴇʟ ᴘʟᴀʏ ᴅɪsᴀʙʟᴇᴅ. </b></blockquote>"
 
-play_1 : "<b>✨ ᴀᴄᴛɪᴠᴀᴛɪɴɢ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ.... ᴘʟᴇᴀsᴇ ʜᴏʟᴅ ᴏɴ.</b>"
+play_1 : "<b>✨ ᴧᴄᴛɪᴠᴧᴛɪηɢ ʏσυʀ ʀєǫυєsᴛ.... ᴘʟєᴧsє ʜσʟᴅ ση.</b>"
 play_2 : "<blockquote expandable><b>✧ ᴄʜᴀɴɴᴇʟ ᴘʟᴀʏ ᴍᴏᴅᴇ\n\n✧ ᴘʀᴏᴄᴇssɪɴɢ, ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...\n\n✧ ʟɪɴᴋᴇᴅ ᴄʜᴀɴɴᴇʟ : {0} </b></blockquote>"
 play_3 : "<blockquote expandable><b>✧ ғᴀɪʟᴇᴅ ᴛᴏ ᴘʀᴏᴄᴇss ǫᴜᴇʀʏ. </b></blockquote>"
 play_4 : "<blockquote expandable><b>✧ ᴀᴅᴍɪɴs ᴏɴʟʏ ᴘʟᴀʏ\n✧ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴏғ ᴛʜɪs ᴄʜᴀᴛ ᴀʀᴇ ᴀʟʟᴏᴡᴇᴅ ᴛᴏ ᴘʟᴀʏ\n\nᴄʜᴀɴɢᴇ ᴘʟᴀʏ ᴍᴏᴅᴇ ᴠɪᴀ /playmode </b></blockquote>"
@@ -182,11 +182,11 @@ CLOSE_BUTTON  : "ᴄʟᴏsᴇ ⌫"
 BACK_BUTTON : "ʙᴀᴄᴋ ⟲"
 
 S_B_1 : " ʌᴅᴅ ϻєєʜ ☊₊ "
-S_B_2 : " υᴘᴅᴧᴛєs ⎘ "
+S_B_2 : " ᴧxɪσϻ υᴘᴅᴧᴛєs ⎘ "
 S_B_3 : " ☊₊ ᴧᴅᴅ ᴍᴇ ᴛσ ʏσᴜʀ ᴄʜᴧᴛ ₊☊ "
 S_B_4 : " ♫︎ ʜєʟᴘ ᴧηᴅ ᴄσϻϻᴧηᴅ ♫︎ "
 S_B_5 : "⌯ ᴧxɪᴏϻ ⌯"
-S_B_6 : " sυᴘᴘσʀᴛ ☏︎ "
+S_B_6 : " ᴧxɪσϻ sυᴘᴘσʀᴛ ☏︎ "
 S_B_7 : " 🛠️ 𝐒ᴏᴜʀᴄᴇ 𝐂ᴏᴅᴇ "
 S_B_8 : " 👀 𝐘ᴏᴜᴛᴜʙᴇ "
 
