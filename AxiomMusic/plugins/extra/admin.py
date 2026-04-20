@@ -47,7 +47,7 @@ kickpic = [
 button = [
     [
         InlineKeyboardButton(text="ᴜᴘᴅᴀᴛᴇs", url="https://t.me/Axiombots"),
-        InlineKeyboardButton(" ⌯ ᴅᴇᴠᴇʟᴏᴘᴇʀ ⌯ ", url="tg://user?id=7169279112")
+        InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
     ]
 ]
 
@@ -69,48 +69,40 @@ async def bans_user(user_id, first_name, admin_id, admin_name, chat_id, message)
         await app.ban_chat_member(chat_id, user_id)
         await app.unban_chat_member(chat_id, user_id)
     except ChatAdminRequired:
-        return "I need ban rights to perform this action.", False
+        return "✧ ɪ ɴᴇᴇᴅ ʙᴀɴ ʀɪɢʜᴛs ᴛᴏ ᴘᴇʀғᴏʀᴍ ᴛʜɪs ᴀᴄᴛɪᴏɴ.", False
     except UserAdminInvalid:
-        return "I can't ban another admin!", False
+        return "✧ ɪ ᴄᴀɴ'ᴛ ʙᴀɴ ᴀɴᴏᴛʜᴇʀ ᴀᴅᴍɪɴ!", False
     except Exception as e:
         if user_id == OWNER_ID:
-            return "Why should I ban myself?", False
-        return f"An error occurred: {e}", False
+            return "✧ ᴡʜʏ sʜᴏᴜʟᴅ ɪ ʙᴀɴ ᴍʏsᴇʟғ? ɪ'ᴍ ɴᴏᴛ ᴛʜᴀᴛ sɪʟʟʏ!", False
+        return f"✧ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ: {e}", False
 
     user_mention = mention(user_id, first_name)
     admin_mention = mention(admin_id, admin_name)
-
-    await app.send_message(
-        LOG_GROUP_ID,
-        f"<blockquote expandable><b>✧ {user_mention} ᴡᴀs ʙᴀɴɴᴇᴅ ʙʏ {admin_mention} ɪɴ {message.chat.title} </b></blockquote>"
-    )
+    await app.send_message(LOG_GROUP_ID, f"<blockquote expandable><b>✧ {user_mention} ᴡᴧs ʙᴀɴɴᴇᴅ ʙʏ {admin_mention} ɪɴ {message.chat.title} </b></blockquote>")
 
     ban_message = await message.reply_photo(
         photo=random.choice(kickpic),
         has_spoiler=True,
-        caption=f"<blockquote expandable><b>✧ {user_mention} ᴡᴀs ʙᴀɴɴᴇᴅ ʙʏ {admin_mention}. </b></blockquote>"
+        caption=f"<blockquote expandable><b>✧ {user_mention} ᴡᴧs ʙᴀɴɴᴇᴅ ʙʏ {admin_mention}. </b></blockquote>"
+        # reply_markup=InlineKeyboardMarkup(button)  # unban button chad de
     )
     return ban_message, True
 
-
-@app.on_message(filters.command("ban", "fuck") & admin_filter)
+@app.on_message(filters.command(["ban", "fuck"]) & admin_filter)
 async def ban_user_with_unban_button(client, message):
     chat = message.chat
     chat_id = message.chat.id
     admin_id = message.from_user.id
     admin_name = message.from_user.first_name
     member = await chat.get_member(admin_id)
-
+    
     if member.status in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
         if not member.privileges.can_restrict_members:
-            return await message.reply_text(
-                "<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>"
-            )
+            return await message.reply_text("<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>")
     else:
-        return await message.reply_text(
-            "<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>"
-        )
-
+        return await message.reply_text("<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>")
+        
     if len(message.command) > 1:
         try:
             user_id = int(message.command[1])
@@ -118,51 +110,41 @@ async def ban_user_with_unban_button(client, message):
         except ValueError:
             user_obj = await get_userid_from_username(message.command[1])
             if user_obj is None:
-                return await message.reply_text(
-                    "<blockquote expandable><b>✧ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ. </b></blockquote>"
-                )
+                return await message.reply_text("<blockquote expandable><b>✧ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ. </b></blockquote>")
             user_id = user_obj[0]
             first_name = user_obj[1]
     elif message.reply_to_message:
         user_id = message.reply_to_message.from_user.id
         first_name = message.reply_to_message.from_user.first_name
     else:
-        return await message.reply_text(
-            "<blockquote expandable><b>✧ ᴘʟᴇᴀsᴇ sᴘᴇᴄɪғʏ ᴀ ᴠᴀʟɪᴅ ᴜsᴇʀ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴛʜᴇɪʀ ᴍᴇssᴀɢᴇ. </b></blockquote>"
-        )
-
+        return await message.reply_text("<blockquote expandable><b>✧ ᴘʟᴇᴀsᴇ sᴘᴇᴄɪғʏ ᴀ ᴠᴀʟɪᴅ ᴜsᴇʀ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴛʜᴇɪʀ ᴍᴇssᴀɢᴇ. </b></blockquote>")
+        
     msg_text, result = await bans_user(user_id, first_name, admin_id, admin_name, chat_id, message)
     if not result:
         return await message.reply_text(msg_text)
 
     unban_button = [
-        [InlineKeyboardButton("Ʋɴʙᴀɴ Ʋsᴇʀ", callback_data=f"unban_{user_id}")]
+        [InlineKeyboardButton("ƲɴʙᴀƝ ƲsᴇƦ", callback_data=f"unban_{user_id}")]
     ]
-
     await message.reply_text(
-        f"ᴄʟɪᴄᴋ ʙᴇʟᴏᴡ ᴛᴏ ᴜɴʙᴀɴ {first_name}.",
+        f"Click below to unban {first_name}.",
         reply_markup=InlineKeyboardMarkup(unban_button),
     )
 
-
-@app.on_message(filters.command("unban") & admin_filter)
+@app.on_message(filters.command(["unban", "hehe"]) & admin_filter)
 async def unban_user(client, message):
     chat = message.chat
     chat_id = message.chat.id
     admin_id = message.from_user.id
     admin_name = message.from_user.first_name
     member = await chat.get_member(admin_id)
-
+    
     if member.status in [enums.ChatMemberStatus.ADMINISTRATOR, enums.ChatMemberStatus.OWNER]:
         if not member.privileges.can_restrict_members:
-            return await message.reply_text(
-                "<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>"
-            )
+            return await message.reply_text("<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>")
     else:
-        return await message.reply_text(
-            "<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>"
-        )
-
+        return await message.reply_text("<blockquote expandable><b>✧ ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴜɴʙᴀɴ sᴏᴍᴇᴏɴᴇ. </b></blockquote>")
+        
     if len(message.command) > 1:
         try:
             user_id = int(message.command[1])
@@ -170,52 +152,36 @@ async def unban_user(client, message):
         except ValueError:
             user_obj = await get_userid_from_username(message.command[1])
             if user_obj is None:
-                return await message.reply_text(
-                    "<blockquote expandable><b>✧ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ. </b></blockquote>"
-                )
+                return await message.reply_text("<blockquote expandable><b>✧ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ. </b></blockquote>")
             user_id = user_obj[0]
             first_name = user_obj[1]
     else:
-        return await message.reply_text(
-            "<blockquote expandable><b>✧ ᴘʟᴇᴀsᴇ sᴘᴇᴄɪғʏ ᴀ ᴠᴀʟɪᴅ ᴜsᴇʀ ᴛᴏ ᴜɴʙᴀɴ. </b></blockquote>"
-        )
-
+        return await message.reply_text("<blockquote expandable><b>✧ ᴘʟᴇᴀsᴇ sᴘᴇᴄɪғʏ ᴀ ᴠᴀʟɪᴅ ᴜsᴇʀ ᴛᴏ ᴜɴʙᴀɴ. </b></blockquote>")
+    
     try:
         await app.unban_chat_member(chat_id, user_id)
-
         user_mention = mention(user_id, first_name)
         admin_mention = mention(admin_id, admin_name)
-
         await message.reply_photo(
             photo=random.choice(kickpic),
             has_spoiler=True,
-            caption=f"<blockquote expandable><b>✧ {user_mention} ᴡᴀs ᴜɴʙᴀɴɴᴇᴅ ʙʏ {admin_mention}. </b></blockquote>",
+            caption=f"<blockquote expandable><b>✧ {user_mention} ᴡᴧs ᴜηʙᴀɴɴᴇᴅ ʙʏ {admin_mention}. </b></blockquote>",
             reply_markup=InlineKeyboardMarkup(button),
         )
-
-        await app.send_message(
-            LOG_GROUP_ID,
-            f"<blockquote expandable><b>✧ {user_mention} ᴡᴀs ᴜɴʙᴀɴɴᴇᴅ ʙʏ {admin_mention} ɪɴ {message.chat.title}. </b></blockquote>"
-        )
-
+        await app.send_message(LOG_GROUP_ID, f"<blockquote expandable><b>✧ {user_mention} ᴡᴧs ᴜηʙᴀɴɴᴇᴅ ʙʏ {admin_mention} ɪɴ {message.chat.title}. </b></blockquote>")
     except Exception as e:
-        await message.reply_text(
-            f"<blockquote expandable><b>✧ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ: {e} </b></blockquote>"
-        )
-
+        await message.reply_text(f"<blockquote expandable><b>✧ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ: {e}")
 
 @app.on_callback_query(filters.regex(r"unban_(\d+)"))
 async def unban_button_callback(client, callback_query):
     user_id = int(callback_query.matches[0].group(1))
     chat_id = callback_query.message.chat.id
-
     try:
         await app.unban_chat_member(chat_id, user_id)
         await callback_query.answer("ᴜsᴇʀ ʜᴀs ʙᴇᴇɴ ᴜɴʙᴀɴɴᴇᴅ!")
         await callback_query.message.edit_text("ᴛʜᴇ ᴜsᴇʀ ʜᴀs ʙᴇᴇɴ sᴜᴄᴄᴇssғᴜʟʟʏ ᴜɴʙᴀɴɴᴇᴅ.")
     except Exception as e:
-        await callback_query.answer(f"Error: {e}")
-
+        await callback_query.answer(f"<blockquote expandable><b>✧ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ: {e} </b></blockquote>")
 
 @app.on_message(filters.command("kickme") & filters.group)
 async def kickme_command(client, message):
@@ -225,20 +191,12 @@ async def kickme_command(client, message):
 
     try:
         await app.ban_chat_member(chat_id, user_id)
-
         await message.reply_photo(
             photo=random.choice(kickpic),
             has_spoiler=True,
             caption=f"<blockquote expandable><b>✧ {user_name} ʜᴀs ᴋɪᴄᴋᴇᴅ ᴛʜᴇᴍsᴇʟᴠᴇs ᴏᴜᴛ ᴏғ ᴛʜᴇ ɢʀᴏᴜᴘ! </b></blockquote>",
             reply_markup=InlineKeyboardMarkup(button),
         )
-
-        await app.send_message(
-            LOG_GROUP_ID,
-            f"<blockquote expandable><b>✧ {user_name} ᴜsᴇᴅ ᴛʜᴇ ᴋɪᴄᴋᴍᴇ ᴄᴏᴍᴍᴀɴᴅ ɪɴ {message.chat.title} </b></blockquote>"
-        )
-
+        await app.send_message(LOG_GROUP_ID, f"<blockquote expandable><b>✧ {user_name} ᴜsᴇᴅ ᴛʜᴇ ᴋɪᴄᴋᴍᴇ ᴄᴏᴍᴍᴀɴᴅ ɪɴ {message.chat.title} </b></blockquote>")
     except Exception as e:
-        await message.reply_text(
-            f"<blockquote expandable><b>✧ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ: {e} </b></blockquote>"
-        )
+        await message.reply_text(f"<blockquote expandable><b>✧ ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ: {e} </b></blockquote>")
