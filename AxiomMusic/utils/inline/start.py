@@ -16,7 +16,7 @@
 from pyrogram.types import InlineKeyboardButton
 import config
 from AxiomMusic import app
-from utils.button_colors import get_btn_color
+from AxiomMusic.utils.button_colors import get_btn_color
 
 
 def start_panel(_):
