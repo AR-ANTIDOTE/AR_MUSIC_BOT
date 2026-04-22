@@ -128,8 +128,8 @@ async def start_pm(client, message: Message, _):
             if await is_on_off(2):
                 await app.send_message(
                     chat_id=config.LOGGER_ID,
-                    text=f"<blockquote expandable><b>✧ {message.from_user.mention} checked track info\n\n"
-                         f"✧ ID: <code>{message.from_user.id}</code>\n"
+                    text=f"<blockquote<b>✧ {message.from_user.mention} checked track info,/blockquote>\n\n"
+                         f"blockquote>✧ ID: <code>{message.from_user.id}</code>\n"
                          f"✧ User: @{message.from_user.username} </b></blockquote>",
                 )
             return
@@ -149,8 +149,8 @@ async def start_pm(client, message: Message, _):
     if await is_on_off(2):
         await app.send_message(
             chat_id=config.LOGGER_ID,
-            text=f"<blockquote expandable><b>✧ {message.from_user.mention} started bot\n\n"
-                 f"✧ ID: <code>{message.from_user.id}</code>\n"
+            text=f"<blockquote><b>✧ {message.from_user.mention} started bot</blockquote>\n\n"
+                 f"<blockquote>✧ ID: <code>{message.from_user.id}</code>\n"
                  f"✧ User: @{message.from_user.username} </b></blockquote>",
         )
 
