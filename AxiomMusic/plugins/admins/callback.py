@@ -156,7 +156,7 @@ async def _do_skip_or_replay(CallbackQuery_or_message, chat_id, _, is_replay=Fal
         except Exception:
             return await reply_to.reply_text(_["call_6"])
         button = stream_markup(_, chat_id)
-        img = await get_thumb(videoid)
+        img = await get_thumb(videoid, user)
         run = await reply_to.reply_photo(
             photo=img,
             has_spoiler=True,
@@ -186,7 +186,7 @@ async def _do_skip_or_replay(CallbackQuery_or_message, chat_id, _, is_replay=Fal
         except Exception:
             return await mystic.edit_text(_["call_6"])
         button = stream_markup(_, chat_id)
-        img = await get_thumb(videoid)
+        img = await get_thumb(videoid, user)
         run = await reply_to.reply_photo(
             photo=img,
             has_spoiler=True,
@@ -237,7 +237,7 @@ async def _do_skip_or_replay(CallbackQuery_or_message, chat_id, _, is_replay=Fal
             photo = SOUNCLOUD_IMG_URL if str(streamtype) == "audio" else TELEGRAM_VIDEO_URL
             caption = _["stream_1"].format(SUPPORT_CHAT, title[:23], duration, user)
         else:
-            photo = await get_thumb(videoid)
+            img = await get_thumb(videoid, user)
             caption = _["stream_1"].format(
                 f"https://t.me/{app.username}?start=info_{videoid}",
                 title[:23],
