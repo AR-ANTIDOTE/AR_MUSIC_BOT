@@ -205,7 +205,6 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     f_tit = _get_font(FONT_BOLD,   44)
     f_s   = _get_font(FONT_NORMAL, 30)
     f_wm  = _get_font(FONT_BOLD,   24)
-    f_req = _get_font(FONT_BOLD, 30)
 
     draw.text((105, 44),  duration,                                                  font=f_t,   fill=c_base,     anchor="mm")
     draw.text((105, 598), "00:39",                                                   font=f_t,   fill=c_base,     anchor="mm")
@@ -232,16 +231,27 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     label_text = "Requested by: "
     name_text  = safe_name
 
-    # width calculate (center align ke liye)
-    label_w = draw.textlength(label_text, font=f_req_label)
-    name_w  = draw.textlength(name_text, font=f_req_name)
+   label_w = draw.textlength(label_text, font=f_req_label)
+
+    # 🔥 calculate width using fallback fonts
+    name_w = 0
+    for char in name_text:
+        for font in fonts:
+            try:
+                if font.getbbox(char):
+                    name_w += font.getlength(char)
+                    break
+            except:
+                continue
 
     total_w = label_w + name_w
 
     start_x = 680 - total_w // 2
     y = 680
+
+    # 🔥 height fix
     label_h = f_req_label.getbbox("A")[3]
-    name_h  = f_req_name.getbbox("A")[3]
+    name_h = max(font.getbbox("A")[3] for font in fonts)
 
     label_y = y
     name_y  = y + (label_h - name_h) // 2
