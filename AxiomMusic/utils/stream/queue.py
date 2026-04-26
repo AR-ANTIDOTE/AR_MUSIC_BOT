@@ -41,8 +41,9 @@ async def put_queue(
     if not user or str(user).strip().lower() in ["", "none", "null", "-"]:
         try:
             from AxiomMusic import app
-            member = await app.get_users(user_id)
-            user = member.first_name
+            user = " ".join(
+                filter(None, [member.first_name, member.last_name])
+            ).strip() or "Unknown"
         except:
             user = "Unknown"
 
