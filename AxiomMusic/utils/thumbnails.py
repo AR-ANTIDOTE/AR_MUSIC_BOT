@@ -36,17 +36,21 @@ def draw_text_with_fallback(draw, position, text, fonts, fill):
 
         for font in fonts:
             try:
-                if font.getmask(char).getbbox():
+                mask = font.getmask(char)
+                if mask and mask.getbbox():
                     draw.text((x, y), char, font=font, fill=fill)
                     x += font.getlength(char)
                     drawn = True
                     break
-            except:
+            except Exception:
                 continue
 
         if not drawn:
-            draw.text((x, y), char, font=fonts[-1], fill=fill)
-            x += fonts[-1].getlength(char)
+            try:
+                draw.text((x, y), char, font=fonts[-1], fill=fill)
+                x += fonts[-1].getlength(char)
+            except:
+                pass
 
 # ═══════════════════════════════════════════════════════════════════
 # THUMBNAIL GENERATOR - VERSION 4.1 (Performance Edition)
