@@ -187,12 +187,40 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     if safe_name.lower() in ["none", "", "-", "null"]:
         safe_name = "Unknown"
 
+# 🔥 custom color control (yaha change karega tu)
+    NAME_COLOR = (255, 255, 255)   # white
+    # NAME_COLOR = (255, 215, 0)   # yellow karna ho to ye use kar
+
+    # fonts
+    f_req_label = _get_font(FONT_BOLD, 30)     # "Requested by:"
+    f_req_name  = _get_font(FONT_NORMAL, 30)   # username
+
+    label_text = "Requested by: "
+    name_text  = safe_name
+
+    # width calculate (center align ke liye)
+    label_w = draw.textlength(label_text, font=f_req_label)
+    name_w  = draw.textlength(name_text, font=f_req_name)
+
+    total_w = label_w + name_w
+
+    start_x = 685 - total_w // 2
+    y = 680
+
+    # 🔹 label (palette color = c_base)
     draw.text(
-        (685, 680),
-        _truncate(draw, f"Requested by: {safe_name}", f_req, 800),
-        font=f_req,
-        fill=REQ_COLOR,
-        anchor="mm"
+        (start_x, y),
+        label_text,
+        font=f_req_label,
+        fill=c_base   # 🔥 same color as border / theme
+    )
+
+    # 🔹 username (custom color)
+    draw.text(
+        (start_x + label_w, y),
+        name_text,
+        font=f_req_name,
+        fill=NAME_COLOR   # 🔥 tu control karega
     )
     draw.text((1255, 695), "Dev :- Maanav",                                          font=f_wm,  fill=TEXT_WHITE, anchor="rd")
 
