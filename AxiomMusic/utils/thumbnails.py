@@ -180,7 +180,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     safe_name = str(user_name).strip() if user_name else "Unknown"
 
     if safe_name.lower() in ["none", "", "-", "null"]:
-    safe_name = "Unknown"
+        safe_name = "Unknown"
 
     draw.text(
         (685, 680),
