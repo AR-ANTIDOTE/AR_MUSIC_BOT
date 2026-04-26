@@ -69,6 +69,7 @@ async def put_queue_index(
     duration,
     user,
     vidid,
+    user_id,
     stream,
     forceplay: Union[bool, str] = None,
 ):
@@ -88,6 +89,7 @@ async def put_queue_index(
         "dur": duration,
         "streamtype": stream,
         "by": user,
+        "user_id": user_id,
         "chat_id": original_chat_id,
         "file": file,
         "vidid": vidid,
