@@ -193,7 +193,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     # fonts
     f_req_label = _get_font(FONT_BOLD, 30)     # "Requested by:"
-    f_req_name  = _get_font(FONT_NORMAL, 30)   # username
+    f_req_name = ImageFont.load_default()   # username
 
     label_text = "Requested by: "
     name_text  = safe_name
@@ -206,21 +206,25 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     start_x = 680 - total_w // 2
     y = 680
+    label_h = f_req_label.getbbox("A")[3]
+    name_h  = f_req_name.getbbox("A")[3]
+
+    label_y = y
+    name_y  = y + (label_h - name_h) // 2
 
     # 🔹 label (palette color = c_base)
     draw.text(
-        (start_x, y),
+        (start_x, label_y),
         label_text,
         font=f_req_label,
-        fill=c_base   # 🔥 same color as border / theme
+        fill=c_base
     )
 
-    # 🔹 username (custom color)
     draw.text(
-        (start_x + label_w, y),
+        (start_x + label_w, name_y),
         name_text,
         font=f_req_name,
-        fill=NAME_COLOR   # 🔥 tu control karega
+        fill=NAME_COLOR
     )
     draw.text((1255, 695), "Dev :- Maanav",                                          font=f_wm,  fill=TEXT_WHITE, anchor="rd")
 
