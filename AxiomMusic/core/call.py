@@ -390,12 +390,12 @@ class Call(PyTgCalls):
         title = (check[0]["title"]).title()
         user = check[0].get("by")
 
-    if not user or str(user).strip() in ["-", "None", "null", ""]:
-        try:
-            member = await app.get_users(check[0]["user_id"])
-            user = member.first_name
-        except:
-            user = "Unknown"
+        if not user or str(user).strip() in ["-", "None", "null", ""]:
+            try:
+                member = await app.get_users(check[0]["user_id"])
+                user = member.first_name
+            except:
+                user = "Unknown"
         original_chat_id = check[0]["chat_id"]
         streamtype = check[0]["streamtype"]
         videoid = check[0]["vidid"]
