@@ -253,8 +253,8 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     f_s   = _get_font(FONT_NORMAL, 30)
     f_wm  = _get_font(FONT_BOLD,   24)
 
-    draw.text((105, 44),  duration,                                                  font=f_t,   fill=c_base,     anchor="mm")
-    draw.text((105, 598), "00:17",                                                   font=f_t,   fill=c_base,     anchor="mm")
+    draw.text((105, 44),  "00:17",                                                  font=f_t,   fill=c_base,     anchor="mm")
+    draw.text((105, 598), duration,                                                  font=f_t,   fill=c_base,     anchor="mm")
     draw.text((685, 580), _truncate(draw, title, f_tit, 800),                        font=f_tit, fill=TEXT_WHITE, anchor="mm")
     draw.text((685, 630), _truncate(draw, f"{channel}  |  {views}", f_s, 840),       font=f_s, fill=TEXT_GRAY, anchor="mm")
     safe_name = clean_username(user_name)
