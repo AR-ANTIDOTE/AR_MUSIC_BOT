@@ -238,7 +238,17 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     from unidecode import unidecode
 
     safe_name = unicodedata.normalize("NFKC", safe_name)
-    safe_name = unidecode(safe_name)   # 🔥 YE MAIN FIX HAI
+    safe_name = unidecode(safe_name)
+
+    # 🔥 remove garbage chars
+    safe_name = re.sub(r'[^A-Za-z0-9 ]+', '', safe_name)
+
+    # 🔥 extra spaces clean
+    safe_name = re.sub(r'\s+', ' ', safe_name).strip()
+
+    # 🔥 fallback
+    if len(safe_name) < 2:
+        safe_name = "AxiomUser"
 
     print(f"[DEBUG] user_name = {user_name}")
 
@@ -248,7 +258,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     if safe_name.lower() in ["none", "", "-", "null"]:
         safe_name = "Unknown"
 
-# 🔥 custom color control (yaha change karega tu)
+    # 🔥 custom color control (yaha change karega tu)
     NAME_COLOR = (255, 255, 255)   # white
     # NAME_COLOR = (255, 215, 0)   # yellow karna ho to ye use kar
 
@@ -290,7 +300,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     name_h = max(font.getbbox("A")[3] for font in fonts)
 
     label_y = y
-    name_y  = y + (label_h - name_h) // 2
+    name_y  = y   # 🔥 same line pe laa diya
 
     # 🔹 label (palette color = c_base)
     draw.text(
