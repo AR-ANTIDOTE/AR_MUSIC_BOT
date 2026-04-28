@@ -70,30 +70,6 @@ def _get_fallback_fonts(size: int):
 
     return fonts
 
-def draw_text_with_fallback(draw, position, text, fonts, fill):
-    x, y = position
-
-    for char in text:
-        drawn = False
-
-        for font in fonts:
-            try:
-                mask = font.getmask(char)
-                if mask and mask.getbbox():
-                    draw.text((x, y), char, font=font, fill=fill)
-                    x += font.getlength(char)
-                    drawn = True
-                    break
-            except Exception:
-                continue
-
-        if not drawn:
-            try:
-                draw.text((x, y), char, font=fonts[-1], fill=fill)
-                x += fonts[-1].getlength(char)
-            except:
-                pass
-
 # ═══════════════════════════════════════════════════════════════════
 # THUMBNAIL GENERATOR - VERSION 4.1 (Performance Edition)
 # Fixes: removed unused numpy import, added in-memory cache guard
@@ -273,7 +249,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     # fonts
     f_req_label = _get_font(FONT_BOLD, 30)     # "Requested by:"
-    fonts = _get_fallback_fonts(30)   # username
+    f_req = _get_font(FONT_BOLD, 30)   # username
 
     label_text = "Requested by: "
     name_text  = safe_name
@@ -320,20 +296,22 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     label_y = y + (max_height - label_height) // 2
     name_y  = y + (max_height - name_height) // 2   # 🔥 same line pe laa diya
 
-    # 🔹 label (palette color = c_base)
+    # label
     draw.text(
-        (start_x, label_y),
+        (start_x, y),
         label_text,
-        font=f_req_label,
-        fill=c_base
+        font=f_req,
+        fill=c_base,
+        anchor="ls"
     )
 
-    draw_text_with_fallback(
-        draw,
-       (start_x + label_w, name_y),
+        # name (same font)
+    draw.text(
+        (start_x + label_w, y),
         name_text,
-       fonts,
-       NAME_COLOR
+        font=f_req,
+        fill=NAME_COLOR,
+        anchor="ls"
     )
     draw.text((1255, 41), "Dev :- Maanav",                                          font=f_wm,  fill=TEXT_WHITE, anchor="rd")
 
