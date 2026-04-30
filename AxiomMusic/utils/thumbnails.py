@@ -262,7 +262,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     center_x = W // 2
     start_x = center_x - total_w // 2
-    y = 660
+    y = 680
 
     # label
     draw.text(
