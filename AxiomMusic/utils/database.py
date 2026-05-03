@@ -32,6 +32,7 @@ onoffdb = mongodb.onoffper
 playmodedb = mongodb.playmode
 playtypedb = mongodb.playtypedb
 skipdb = mongodb.skipmode
+thumbdb = mongodb.thumbmode
 sudoersdb = mongodb.sudoers
 usersdb = mongodb.tgusersdb
 
@@ -50,6 +51,7 @@ pause = {}
 playmode = {}
 playtype = {}
 skipmode = {}
+thumbmode = {}
 
 
 async def get_assistant_number(chat_id: int) -> str:
@@ -189,6 +191,45 @@ async def skip_off(chat_id: int):
     user = await skipdb.find_one({"chat_id": chat_id})
     if not user:
         return await skipdb.insert_one({"chat_id": chat_id})
+
+# ==========================================
+# THUMBNAIL MODE
+# ==========================================
+
+async def is_thumbmode(chat_id: int) -> bool:
+    mode = thumbmode.get(chat_id)
+
+    if mode is None:
+        user = await thumbdb.find_one({"chat_id": chat_id})
+
+        if not user:
+            thumbmode[chat_id] = True
+            return True
+
+        thumbmode[chat_id] = user["mode"]
+        return user["mode"]
+
+    return mode
+
+
+async def thumb_on(chat_id: int):
+    thumbmode[chat_id] = True
+
+    await thumbdb.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"mode": True}},
+        upsert=True
+    )
+
+
+async def thumb_off(chat_id: int):
+    thumbmode[chat_id] = False
+
+    await thumbdb.update_one(
+        {"chat_id": chat_id},
+        {"$set": {"mode": False}},
+        upsert=True
+    )
 
 
 async def get_upvote_count(chat_id: int) -> int:
