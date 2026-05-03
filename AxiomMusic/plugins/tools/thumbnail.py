@@ -11,11 +11,18 @@ from AxiomMusic.utils.database import (
 
 @app.on_message(filters.command("thumbnail") & filters.group)
 async def thumbnail_cmd(_, message: Message):
+
+    chat_id = message.chat.id
+
+    # ----------------------------
+    # STATUS CHECK
+    # ----------------------------
     if len(message.command) < 2:
-        status = await is_thumbnail(message.chat.id)
+
+        status = await is_thumbmode(chat_id)
 
         return await message.reply_text(
-            f"<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ 𝛅𝞃ᴧ𝞃𝛖s:</b> {'Enabled' if status else 'Disabled'}\n\n"
+            f"<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ 𝚺ᴛᴀᴛᴜs:</b> {'Enabled ✅' if status else 'Disabled ❌'}\n\n"
             "Usᴧɢє:\n"
             "/thumbnail on\n"
             "/thumbnail off"
@@ -23,21 +30,33 @@ async def thumbnail_cmd(_, message: Message):
 
     option = message.command[1].lower()
 
+    # ----------------------------
+    # ENABLE THUMBNAIL
+    # ----------------------------
     if option == "on":
-        await thumbnail_on(message.chat.id)
+
+        await thumb_on(chat_id)
 
         return await message.reply_text(
-            "<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ 𝚺ηᴧβℓє∂.</b>"
+            "<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ 𝙴ɴᴀʙʟᴇᴅ ✅</b>"
         )
 
+    # ----------------------------
+    # DISABLE THUMBNAIL
+    # ----------------------------
     elif option == "off":
-        await thumbnail_off(message.chat.id)
+
+        await thumb_off(chat_id)
 
         return await message.reply_text(
-            "<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ ∂ιsᴧβℓє∂.</b>"
+            "<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ 𝙳ɪsᴀʙʟᴇᴅ ❌</b>"
         )
 
+    # ----------------------------
+    # INVALID ARGUMENT
+    # ----------------------------
     else:
+
         return await message.reply_text(
             "Usᴧɢє:\n"
             "/thumbnail on\n"
