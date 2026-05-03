@@ -3,9 +3,9 @@ from pyrogram.types import Message
 
 from AxiomMusic import app
 from AxiomMusic.utils.database import (
-    thumbnail_on,
-    thumbnail_off,
-    is_thumbnail,
+    thumb_on,
+    thumb_off,
+    is_thumbmode,
 )
 
 
