@@ -12,11 +12,21 @@ from pytgcalls.pytgcalls_session import PyTgCallsSession
 import config
 from AxiomMusic import LOGGER, YouTube, app
 from AxiomMusic.misc import db
-from AxiomMusic.utils.database import (add_active_chat, add_active_video_chat,
-                                       get_lang, get_loop, group_assistant,
-                                       is_autoend, music_on,
-                                       remove_active_chat,
-                                       remove_active_video_chat, set_loop)
+from AxiomMusic.utils.database import (
+    add_active_chat,
+    add_active_video_chat,
+    get_lang,
+    get_loop,
+    group_assistant,
+    is_autoend,
+    music_on,
+    remove_active_chat,
+    remove_active_video_chat,
+    set_loop,
+    is_thumbnail,
+    thumbnail_on,
+    thumbnail_off,
+)
 from AxiomMusic.utils.exceptions import AssistantErr
 from AxiomMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
 from AxiomMusic.utils.inline.play import stream_markup
@@ -367,7 +377,7 @@ class Call(PyTgCalls):
                                 InlineKeyboardButton(
                                     "⋞ ᴄʟᴏsє ⋟", callback_data="close_message"
                                 ),
-                            ]
+                            ],
                             [
                                 InlineKeyboardButton(text=_["⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯"], user_id=config.OWNER_USERNAME
                                 ),
@@ -407,6 +417,8 @@ class Call(PyTgCalls):
             db[chat_id][0]["speed_path"] = None
             db[chat_id][0]["speed"] = 1.0
         video = True if str(streamtype) == "video" else False
+        thumb_enabled = await is_thumbnail(chat_id)
+
         if "live_" in queued:
             n, link = await YouTube.video(videoid, True)
             if n == 0:
@@ -414,7 +426,9 @@ class Call(PyTgCalls):
                     original_chat_id,
                     text=_["call_6"],
                 )
+
             stream = self._build_stream(link, video=video)
+
             try:
                 await self._play_on_assistant(client, chat_id, stream)
             except Exception:
@@ -422,8 +436,14 @@ class Call(PyTgCalls):
                     original_chat_id,
                     text=_["call_6"],
                 )
-            img = await get_thumb(videoid, user)
+
+            if thumb_enabled:
+                img = await get_thumb(videoid, user)
+            else:
+                img = config.STREAM_IMG_URL
+
             button = stream_markup(_, chat_id)
+
             run = await app.send_photo(
                 chat_id=original_chat_id,
                 photo=img,
@@ -436,10 +456,13 @@ class Call(PyTgCalls):
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
+
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
         elif "vid_" in queued:
             mystic = await app.send_message(original_chat_id, _["call_7"])
+
             try:
                 file_path, direct = await YouTube.download(
                     videoid,
@@ -449,9 +472,12 @@ class Call(PyTgCalls):
                 )
             except Exception:
                 return await mystic.edit_text(
-                    _["call_6"], disable_web_page_preview=True
+                    _["call_6"],
+                    disable_web_page_preview=True
                 )
+
             stream = self._build_stream(file_path, video=video)
+
             try:
                 await self._play_on_assistant(client, chat_id, stream)
             except Exception:
@@ -459,9 +485,16 @@ class Call(PyTgCalls):
                     original_chat_id,
                     text=_["call_6"],
                 )
-            img = await get_thumb(videoid, user)
+
+            if thumb_enabled:
+                img = await get_thumb(videoid, user)
+            else:
+                img = config.STREAM_IMG_URL
+
             button = stream_markup(_, chat_id)
+
             await mystic.delete()
+
             run = await app.send_photo(
                 chat_id=original_chat_id,
                 photo=img,
@@ -474,11 +507,13 @@ class Call(PyTgCalls):
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
+
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
 
         elif "index_" in queued:
             stream = self._build_stream(videoid, video=video)
+
             try:
                 await self._play_on_assistant(client, chat_id, stream)
             except Exception:
@@ -486,7 +521,9 @@ class Call(PyTgCalls):
                     original_chat_id,
                     text=_["call_6"],
                 )
+
             button = stream_markup(_, chat_id)
+
             run = await app.send_photo(
                 chat_id=original_chat_id,
                 photo=config.STREAM_IMG_URL,
@@ -494,10 +531,13 @@ class Call(PyTgCalls):
                 caption=_["stream_2"].format(user),
                 reply_markup=InlineKeyboardMarkup(button),
             )
+
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
         else:
             stream = self._build_stream(queued, video=video)
+
             try:
                 await self._play_on_assistant(client, chat_id, stream)
             except Exception:
@@ -505,8 +545,10 @@ class Call(PyTgCalls):
                     original_chat_id,
                     text=_["call_6"],
                 )
+
             if videoid == "telegram":
                 button = stream_markup(_, chat_id)
+
                 run = await app.send_photo(
                     chat_id=original_chat_id,
                     photo=(
@@ -516,28 +558,44 @@ class Call(PyTgCalls):
                     ),
                     has_spoiler=True,
                     caption=_["stream_1"].format(
-                        config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
+                        config.SUPPORT_CHAT,
+                        title[:23],
+                        check[0]["dur"],
+                        user,
                     ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
+
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "tg"
+
             elif videoid == "soundcloud":
                 button = stream_markup(_, chat_id)
+
                 run = await app.send_photo(
                     chat_id=original_chat_id,
                     photo=config.SOUNCLOUD_IMG_URL,
                     has_spoiler=True,
                     caption=_["stream_1"].format(
-                        config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
+                        config.SUPPORT_CHAT,
+                        title[:23],
+                        check[0]["dur"],
+                        user,
                     ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
+
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "tg"
+
             else:
-                img = await get_thumb(videoid, user)
+                if thumb_enabled:
+                    img = await get_thumb(videoid, user)
+                else:
+                    img = config.STREAM_IMG_URL
+
                 button = stream_markup(_, chat_id)
+
                 run = await app.send_photo(
                     chat_id=original_chat_id,
                     photo=img,
@@ -550,9 +608,9 @@ class Call(PyTgCalls):
                     ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
+
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "stream"
-
     
     async def ping(self):
         pings = []
