@@ -417,17 +417,26 @@ async def play_commnd(
                     "f" if fplay else "d",
                 )
                 await mystic.delete()
-            thumb_status = await is_thumbmode(message.chat.id)
 
-            if thumb_status:
-                await message.reply_text(
-                    cap if not slider else _["play_10"].format(
-                        details["title"].title(),
-                        details["duration_min"],
-                    ),
-                    reply_markup=InlineKeyboardMarkup(buttons)
+                thumb_status = await is_thumbmode(message.chat.id)
+
+                caption_text = _["play_10"].format(
+                    details["title"].title(),
+                    details["duration_min"],
                 )
-                return await play_logs(message, streamtype=f"Searched on Youtube")
+
+                if thumb_status:
+                    return await message.reply_photo(
+                        photo=details["thumb"] if slider else img,
+                        has_spoiler=True,
+                        caption=caption_text,
+                        reply_markup=InlineKeyboardMarkup(buttons),
+                    )
+                else:
+                    return await message.reply_text(
+                        caption_text,
+                        reply_markup=InlineKeyboardMarkup(buttons)
+                    )
 
             buttons = track_markup(
                 _,
@@ -439,22 +448,21 @@ async def play_commnd(
 
             await mystic.delete()
 
-            if thumb_status:
-                await message.reply_photo(
+            caption_text = _["play_10"].format(
+                details["title"].title(),
+                details["duration_min"],
+            )
+
+            if await is_thumbmode(message.chat.id):
+                return await message.reply_photo(
                     photo=details["thumb"] if slider else img,
                     has_spoiler=True,
-                    caption=cap if not slider else _["play_10"].format(
-                        details["title"].title(),
-                        details["duration_min"],
-                    ),
+                    caption=caption_text,
                     reply_markup=InlineKeyboardMarkup(buttons),
                 )
             else:
-                await message.reply_text(
-                    cap if not slider else _["play_10"].format(
-                        details["title"].title(),
-                        details["duration_min"],
-                    ),
+                return await message.reply_text(
+                    caption_text,
                     reply_markup=InlineKeyboardMarkup(buttons)
                 )
 
