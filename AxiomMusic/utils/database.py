@@ -206,8 +206,8 @@ async def is_thumbmode(chat_id: int) -> bool:
             thumbmode[chat_id] = True
             return True
 
-        thumbmode[chat_id] = user["mode"]
-        return user["mode"]
+        thumbmode[chat_id] = bool(user["mode"])
+        return bool(user["mode"])
 
     return mode
 
