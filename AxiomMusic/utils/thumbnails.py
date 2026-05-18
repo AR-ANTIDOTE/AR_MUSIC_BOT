@@ -217,10 +217,90 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     # 5) Compose
     c_base, c_light, c_dark = _random_palette()
-    base = _make_bg_v4()
-    base = _draw_card_border_v4(base, 310, 90, 1060, 545, 28, c_base, c_light, c_dark)
-    base = _draw_art_shadow(base, 322, 102, 727, 433, 18, c_base)
-    base = _paste_rounded(base, song_img, 322, 102, 727, 433, 18)
+    
+    # thumbnail se base color mood
+    bg = song_img.resize((W, H), Image.LANCZOS).convert("RGB")
+    bg = bg.filter(ImageFilter.GaussianBlur(55))
+    
+    # dark cinematic overlay
+    dark_overlay = Image.new("RGBA", (W, H), (5, 8, 14, 190))
+    bg = Image.alpha_composite(bg.convert("RGBA"), dark_overlay)
+    
+    # ambient gradient blobs
+    blob_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    blob_draw = ImageDraw.Draw(blob_layer)
+    
+    # left glow
+    blob_draw.ellipse(
+        (-180, 120, 420, 720),
+        fill=(*c_base, 70)
+    )
+    
+    # right glow
+    blob_draw.ellipse(
+        (850, -100, 1450, 500),
+        fill=(*c_light, 55)
+    )
+    
+    # bottom center glow
+    blob_draw.ellipse(
+        (350, 480, 980, 980),
+        fill=(*c_dark, 45)
+    )
+    
+    blob_layer = blob_layer.filter(ImageFilter.GaussianBlur(120))
+    bg = Image.alpha_composite(bg, blob_layer)
+    
+    # subtle vignette
+    vignette = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    vd = ImageDraw.Draw(vignette)
+    
+    for i in range(220, 0, -8):
+        alpha = int(150 * (1 - i / 220))
+        vd.rectangle(
+            [0, 0, W, H],
+            outline=(0, 0, 0, alpha),
+            width=i
+        )
+    
+    vignette = vignette.filter(ImageFilter.GaussianBlur(75))
+    bg = Image.alpha_composite(bg, vignette)
+    
+    # soft noise texture
+    noise = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    nd = ImageDraw.Draw(noise)
+    
+    for _ in range(1200):
+        x = random.randint(0, W)
+        y = random.randint(0, H)
+        nd.point((x, y), fill=(255, 255, 255, random.randint(8, 20)))
+    
+    noise = noise.filter(ImageFilter.GaussianBlur(0.5))
+    bg = Image.alpha_composite(bg, noise).convert("RGB")
+    
+    base = bg
+    
+    # premium glass card
+    base = _draw_card_border_v4(
+        base,
+        310, 90, 1060, 545,
+        30,
+        c_base, c_light, c_dark
+    )
+    
+    # inner glass fill
+    glass = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glass)
+    gd.rounded_rectangle(
+        [325, 105, 1045, 530],
+        radius=22,
+        fill=(255, 255, 255, 18)
+    )
+    
+    glass = glass.filter(ImageFilter.GaussianBlur(8))
+    base = Image.alpha_composite(base.convert("RGBA"), glass).convert("RGB")
+    
+    # progress bar
     base = _draw_bar(base, 105, 93, 556, 0.06, c_base, c_light, c_dark)
 
     draw = ImageDraw.Draw(base)
