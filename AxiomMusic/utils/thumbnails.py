@@ -378,23 +378,20 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     # premium card
     base = _draw_card_border_v4(
         base,
-        310, 90, 1060, 545,
+        310, 65, 1060, 500,
         30,
         c_base, c_light, c_dark
     )
     
-    # thumbnail shadow
-    base = _draw_art_shadow(base, 322, 102, 727, 433, 18, c_base)
-    
-    # thumbnail wapas
-    base = _paste_rounded(base, song_img, 322, 102, 727, 433, 18)
+    base = _draw_art_shadow(base, 322, 77, 727, 413, 18, c_base)
+    base = _paste_rounded(base, song_img, 322, 77, 727, 413, 18)
     
     # subtle glass effect (optional)
     glass = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glass)
     
     gd.rounded_rectangle(
-        [325, 105, 1045, 530],
+        [325, 80, 1045, 485],
         radius=22,
         fill=(255, 255, 255, 8)
     )
@@ -412,8 +409,8 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     draw.text((105, 44),  "00:17",                                                  font=f_t,   fill=c_base,     anchor="mm")
     draw.text((105, 598), duration,                                                  font=f_t,   fill=c_base,     anchor="mm")
-    draw.text((685, 580), _truncate(draw, title, f_tit, 800),                        font=f_tit, fill=TEXT_WHITE, anchor="mm")
-    draw.text((685, 630), _truncate(draw, f"{channel}  |  {views}", f_s, 840),       font=f_s, fill=TEXT_GRAY, anchor="mm")
+    draw.text((685, 565), _truncate(draw, title, f_tit, 800),                        font=f_tit, fill=TEXT_WHITE, anchor="mm")
+    draw.text((685, 615), _truncate(draw, f"{channel}  |  {views}", f_s, 840),       font=f_s, fill=TEXT_GRAY, anchor="mm")
     safe_name = clean_username(user_name)
 
     print(f"[DEBUG] user_name = {user_name}")
