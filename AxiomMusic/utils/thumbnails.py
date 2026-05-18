@@ -212,14 +212,14 @@ def _draw_bar(base: Image.Image, bx, by_top, by_bot, progress: float = 0.06,
     d = ImageDraw.Draw(layer)
 
     bw = 8
-    knob_y = by_top + int((by_bot - by_top) * progress)
+    knob_y = by_top + int((by_bot - by_top) * 0.22)
     kr = 14
 
     # inactive line
     d.rounded_rectangle(
         [(bx - bw//2, by_top), (bx + bw//2, by_bot)],
         radius=4,
-        fill=(131, 141, 147, 255)
+        fill=(90, 95, 110, 255)
     )
 
     # active line
@@ -431,11 +431,31 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     title_text = _truncate(draw, title, f_tit, 800)
     
     # shadow
+    # glow layers
+    for blur in range(10, 0, -2):
+        draw.text(
+            (685, 567),
+            title_text,
+            font=f_tit,
+            fill=(*c_base, 18),
+            anchor="mm"
+        )
+    
+    # shadow
     draw.text(
-        (688, 570),
+        (689, 571),
         title_text,
         font=f_tit,
         fill=(0, 0, 0),
+        anchor="mm"
+    )
+    
+    # main title
+    draw.text(
+        (685, 567),
+        title_text,
+        font=f_tit,
+        fill=TEXT_WHITE,
         anchor="mm"
     )
     
