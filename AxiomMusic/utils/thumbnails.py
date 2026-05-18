@@ -94,37 +94,40 @@ def _get_font(path: str, size: int) -> ImageFont.FreeTypeFont:
         return ImageFont.load_default()
 
 
-def _random_palette() -> Tuple[Tuple[int, int, int], Tuple[int, int, int], Tuple[int, int, int]]:
-    # totally random hue
+def _random_palette():
     h = random.random()
 
-    # wider ranges = more variety
-    s = random.uniform(0.45, 1.0)
-    v = random.uniform(0.55, 1.0)
+    # avoid muddy brown/yuck zone
+    if 0.08 < h < 0.16:
+        h += 0.15
+    if 0.45 < h < 0.52:
+        h += 0.08
 
-    # base main color
+    h %= 1.0
+
+    s = random.uniform(0.75, 1.0)
+    v = random.uniform(0.8, 1.0)
+
     base = tuple(
         int(x * 255)
         for x in colorsys.hsv_to_rgb(h, s, v)
     )
 
-    # lighter neon-ish version
     light = tuple(
         int(x * 255)
         for x in colorsys.hsv_to_rgb(
-            (h + random.uniform(0.03, 0.08)) % 1.0,
-            max(0.25, s - random.uniform(0.15, 0.35)),
-            min(1.0, v + random.uniform(0.12, 0.28))
+            h,
+            random.uniform(0.25, 0.5),
+            1.0
         )
     )
 
-    # darker rich shadow version
     dark = tuple(
         int(x * 255)
         for x in colorsys.hsv_to_rgb(
-            (h - random.uniform(0.03, 0.08)) % 1.0,
-            min(1.0, s + random.uniform(0.05, 0.18)),
-            max(0.18, v - random.uniform(0.28, 0.45))
+            h,
+            1.0,
+            random.uniform(0.18, 0.35)
         )
     )
 
@@ -307,44 +310,31 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     
     # ambient gradient blobs
     # universe / nebula style background glow
-    blob_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    blob_draw = ImageDraw.Draw(blob_layer)
+    bg = Image.new("RGBA", (W, H), (4, 5, 18, 255))
     
-    # random cosmic palette
-    accent = (
-        random.randint(40, 255),
-        random.randint(40, 255),
-        random.randint(40, 255),
-        random.randint(25, 45)
-    )
+    nebula = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ndraw = ImageDraw.Draw(nebula)
     
-    cosmic_colors = [
-        (*c_base, random.randint(45, 85)),
-        (*c_light, random.randint(35, 70)),
-        (*c_dark, random.randint(25, 55)),
-        accent
-    ]
+    # nebula blobs
+    for _ in range(8):
+        color = (
+            random.randint(40, 255),
+            random.randint(40, 255),
+            random.randint(40, 255),
+            random.randint(30, 70)
+        )
     
-    random.shuffle(cosmic_colors)
+        x = random.randint(-200, W)
+        y = random.randint(-200, H)
+        size = random.randint(250, 600)
     
-    positions = [
-        (-220, 80, 420, 700),
-        (820, -150, 1450, 420),
-        (300, 420, 1050, 930),
-        (420, -180, 980, 260),
-    ]
+        ndraw.ellipse(
+            (x, y, x + size, y + size),
+            fill=color
+        )
     
-    for color, pos in zip(cosmic_colors, positions):
-        blob_draw.ellipse(pos, fill=color)
-    
-    # extra center mist glow
-    blob_draw.ellipse(
-        (250, 180, 1050, 760),
-        fill=(255, 255, 255, 12)
-    )
-    
-    blob_layer = blob_layer.filter(ImageFilter.GaussianBlur(150))
-    bg = Image.alpha_composite(bg, blob_layer)
+    nebula = nebula.filter(ImageFilter.GaussianBlur(130))
+    bg = Image.alpha_composite(bg, nebula)
     
     # subtle vignette
     vignette = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -362,18 +352,47 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     bg = Image.alpha_composite(bg, vignette)
     
     # soft noise texture
-    noise = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    nd = ImageDraw.Draw(noise)
+    stars = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sdraw = ImageDraw.Draw(stars)
     
-    for _ in range(1200):
+    for _ in range(2500):
         x = random.randint(0, W)
         y = random.randint(0, H)
-        nd.point((x, y), fill=(255, 255, 255, random.randint(8, 20)))
     
-    noise = noise.filter(ImageFilter.GaussianBlur(0.5))
-    bg = Image.alpha_composite(bg, noise).convert("RGB")
+        size = random.randint(1, 3)
+        alpha = random.randint(80, 220)
+    
+        sdraw.ellipse(
+            (x, y, x + size, y + size),
+            fill=(255, 255, 255, alpha)
+        )
+    
+    stars = stars.filter(ImageFilter.GaussianBlur(0.4))
+    bg = Image.alpha_composite(bg, stars)
+
+    planet = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    pdraw = ImageDraw.Draw(planet)
+    
+    planet_x = random.randint(70, 1150)
+    planet_y = random.randint(60, 550)
+    r = random.randint(35, 70)
+    
+    planet_color = (
+        random.randint(80, 255),
+        random.randint(80, 255),
+        random.randint(80, 255),
+        120
+    )
+    
+    pdraw.ellipse(
+        (planet_x-r, planet_y-r, planet_x+r, planet_y+r),
+        fill=planet_color
+    )
+    
+    planet = planet.filter(ImageFilter.GaussianBlur(8))
+    bg = Image.alpha_composite(bg, planet)
         
-    base = bg
+    base = bg.convert("RGB")
     
     # premium card
     base = _draw_card_border_v4(
@@ -409,8 +428,42 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
 
     draw.text((105, 44),  "00:17",                                                  font=f_t,   fill=c_base,     anchor="mm")
     draw.text((105, 598), duration,                                                  font=f_t,   fill=c_base,     anchor="mm")
-    draw.text((685, 565), _truncate(draw, title, f_tit, 800),                        font=f_tit, fill=TEXT_WHITE, anchor="mm")
-    draw.text((685, 615), _truncate(draw, f"{channel}  |  {views}", f_s, 840),       font=f_s, fill=TEXT_GRAY, anchor="mm")
+    title_text = _truncate(draw, title, f_tit, 800)
+    
+    # shadow
+    draw.text(
+        (688, 548),
+        title_text,
+        font=f_tit,
+        fill=(0, 0, 0),
+        anchor="mm"
+    )
+    
+    # main title
+    draw.text(
+        (685, 545),
+        title_text,
+        font=f_tit,
+        fill=TEXT_WHITE,
+        anchor="mm"
+    )
+    meta_text = _truncate(draw, f"{channel}  |  {views}", f_s, 840)
+    
+    draw.text(
+        (687, 601),
+        meta_text,
+        font=f_s,
+        fill=(0, 0, 0),
+        anchor="mm"
+    )
+    
+    draw.text(
+        (685, 598),
+        meta_text,
+        font=f_s,
+        fill=TEXT_GRAY,
+        anchor="mm"
+    )
     safe_name = clean_username(user_name)
 
     print(f"[DEBUG] user_name = {user_name}")
