@@ -281,32 +281,41 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     bg = bg.filter(ImageFilter.GaussianBlur(55))
     
     # dark cinematic overlay
-    dark_overlay = Image.new("RGBA", (W, H), (5, 8, 14, 190))
+    dark_overlay = Image.new("RGBA", (W, H), (3, 5, 12, 210))
     bg = Image.alpha_composite(bg.convert("RGBA"), dark_overlay)
     
     # ambient gradient blobs
+    # universe / nebula style background glow
     blob_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     blob_draw = ImageDraw.Draw(blob_layer)
     
-    # left glow
+    # random cosmic palette
+    cosmic_colors = [
+        (88, 40, 180, 70),    # purple
+        (0, 210, 255, 55),    # cyan
+        (255, 70, 170, 45),   # pink
+        (80, 120, 255, 35),   # blue
+    ]
+    
+    random.shuffle(cosmic_colors)
+    
+    positions = [
+        (-220, 80, 420, 700),
+        (820, -150, 1450, 420),
+        (300, 420, 1050, 930),
+        (420, -180, 980, 260),
+    ]
+    
+    for color, pos in zip(cosmic_colors, positions):
+        blob_draw.ellipse(pos, fill=color)
+    
+    # extra center mist glow
     blob_draw.ellipse(
-        (-180, 120, 420, 720),
-        fill=(*c_base, 70)
+        (250, 180, 1050, 760),
+        fill=(255, 255, 255, 12)
     )
     
-    # right glow
-    blob_draw.ellipse(
-        (850, -100, 1450, 500),
-        fill=(*c_light, 55)
-    )
-    
-    # bottom center glow
-    blob_draw.ellipse(
-        (350, 480, 980, 980),
-        fill=(*c_dark, 45)
-    )
-    
-    blob_layer = blob_layer.filter(ImageFilter.GaussianBlur(120))
+    blob_layer = blob_layer.filter(ImageFilter.GaussianBlur(150))
     bg = Image.alpha_composite(bg, blob_layer)
     
     # subtle vignette
@@ -314,7 +323,7 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     vd = ImageDraw.Draw(vignette)
     
     for i in range(220, 0, -8):
-        alpha = int(150 * (1 - i / 220))
+        alpha = int(190 * (1 - i / 220))
         vd.rectangle(
             [0, 0, W, H],
             outline=(0, 0, 0, alpha),
