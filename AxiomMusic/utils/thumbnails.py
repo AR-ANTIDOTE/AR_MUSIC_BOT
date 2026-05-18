@@ -277,10 +277,10 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
     
     noise = noise.filter(ImageFilter.GaussianBlur(0.5))
     bg = Image.alpha_composite(bg, noise).convert("RGB")
-    
+        
     base = bg
     
-    # premium glass card
+    # premium card
     base = _draw_card_border_v4(
         base,
         310, 90, 1060, 545,
@@ -288,21 +288,27 @@ async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
         c_base, c_light, c_dark
     )
     
-    # inner glass fill
+    # thumbnail shadow
+    base = _draw_art_shadow(base, 322, 102, 727, 433, 18, c_base)
+    
+    # thumbnail wapas
+    base = _paste_rounded(base, song_img, 322, 102, 727, 433, 18)
+    
+    # subtle glass effect (optional)
     glass = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glass)
+    
     gd.rounded_rectangle(
         [325, 105, 1045, 530],
         radius=22,
-        fill=(255, 255, 255, 18)
+        fill=(255, 255, 255, 8)
     )
     
-    glass = glass.filter(ImageFilter.GaussianBlur(8))
+    glass = glass.filter(ImageFilter.GaussianBlur(4))
     base = Image.alpha_composite(base.convert("RGBA"), glass).convert("RGB")
     
     # progress bar
     base = _draw_bar(base, 105, 93, 556, 0.06, c_base, c_light, c_dark)
-
     draw = ImageDraw.Draw(base)
     f_t   = _get_font(FONT_BOLD,   30)
     f_tit = _get_font(FONT_BOLD,   44)
