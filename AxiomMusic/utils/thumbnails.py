@@ -128,11 +128,15 @@ def _make_bg_v4() -> Image.Image:
 def _draw_card_border_v4(base: Image.Image, x1, y1, x2, y2, r=28, c_base=(202,215,221), c_light=(225,235,240), c_dark=(140,155,162)) -> Image.Image:
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    for i in range(25, 0, -1):
-        alpha = int(60 * (1 - i / 25) ** 1.5)
+    for i in range(38, 0, -1):
+        alpha = int(95 * (1 - i / 38) ** 1.4)
         d.rounded_rectangle([x1 - i, y1 - i, x2 + i, y2 + i], radius=r + i, fill=(255, 255, 255, alpha))
-    for i in range(12, 0, -1):
-        d.rounded_rectangle([x1 - i, y1 - i, x2 + i, y2 + i], radius=r + i, fill=(*c_base, int(45 * (1 - i / 12))))
+    for i in range(18, 0, -1):
+        d.rounded_rectangle(
+            [x1 - i, y1 - i, x2 + i, y2 + i],
+            radius=r + i,
+            fill=(*c_base, int(75 * (1 - i / 18)))
+        )
     d.rounded_rectangle([x1 + 10, y1 + 10, x2 - 10, y2 - 10], radius=max(r - 10, 4), fill=(18, 24, 26, 255))
     for offset, color, bw in [(0, (*c_dark, 255), 5), (2, (*c_base, 255), 3), (4, (255, 255, 255, 180), 2)]:
         d.rounded_rectangle([x1 + offset, y1 + offset, x2 - offset, y2 - offset], radius=max(r - offset, 4), outline=color, width=bw)
@@ -141,12 +145,30 @@ def _draw_card_border_v4(base: Image.Image, x1, y1, x2, y2, r=28, c_base=(202,21
 
 def _draw_art_shadow(base: Image.Image, x, y, w, h, r=18, c_base=(202,215,221)) -> Image.Image:
     shadow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    sd, off_x, off_y = ImageDraw.Draw(shadow_layer), 8, 12
-    for i in range(35, 0, -1):
-        sd.rounded_rectangle([x+off_x-i, y+off_y-i, x+w+off_x+i, y+h+off_y+i], radius=r+i, fill=(0, 0, 0, int(210*(1-i/35)**1.2)))
-    for i in range(15, 0, -1):
-        sd.rounded_rectangle([x+off_x-i, y+off_y-i, x+w+off_x+i, y+h+off_y+i], radius=r+i, fill=(*c_base, int(100*(1-i/15)**2.0)))
-    return Image.alpha_composite(base.convert("RGBA"), shadow_layer.filter(ImageFilter.GaussianBlur(15))).convert("RGB")
+    sd = ImageDraw.Draw(shadow_layer)
+
+    off_x, off_y = 10, 14
+
+    # deep black shadow
+    for i in range(48, 0, -1):
+        alpha = int(230 * (1 - i / 48) ** 1.3)
+        sd.rounded_rectangle(
+            [x+off_x-i, y+off_y-i, x+w+off_x+i, y+h+off_y+i],
+            radius=r+i,
+            fill=(0, 0, 0, alpha)
+        )
+
+    # outer glow
+    for i in range(22, 0, -1):
+        alpha = int(120 * (1 - i / 22) ** 1.6)
+        sd.rounded_rectangle(
+            [x-i, y-i, x+w+i, y+h+i],
+            radius=r+i,
+            fill=(*c_base, alpha)
+        )
+
+    shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(22))
+    return Image.alpha_composite(base.convert("RGBA"), shadow_layer).convert("RGB")
 
 
 def _paste_rounded(base: Image.Image, img: Image.Image, x, y, w, h, r=18) -> Image.Image:
@@ -159,15 +181,51 @@ def _paste_rounded(base: Image.Image, img: Image.Image, x, y, w, h, r=18) -> Ima
     return base_r.convert("RGB")
 
 
-def _draw_bar(base: Image.Image, bx, by_top, by_bot, progress: float = 0.06, c_base=(202,215,221), c_light=(225,235,240), c_dark=(140,155,162)) -> Image.Image:
+def _draw_bar(base: Image.Image, bx, by_top, by_bot, progress: float = 0.06,
+              c_base=(202,215,221), c_light=(225,235,240), c_dark=(140,155,162)) -> Image.Image:
+
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    bw, knob_y, kr = 8, by_top + int((by_bot - by_top) * progress), 14
-    d.rounded_rectangle([(bx - bw//2, by_top), (bx + bw//2, by_bot)], radius=4, fill=(131, 141, 147, 255))
+
+    bw = 8
+    knob_y = by_top + int((by_bot - by_top) * progress)
+    kr = 14
+
+    # inactive line
+    d.rounded_rectangle(
+        [(bx - bw//2, by_top), (bx + bw//2, by_bot)],
+        radius=4,
+        fill=(131, 141, 147, 255)
+    )
+
+    # active line
     if knob_y > by_top:
-        d.rounded_rectangle([(bx - bw//2, by_top), (bx + bw//2, knob_y)], radius=4, fill=(*c_base, 255))
-    d.ellipse([(bx - kr - 6, knob_y - kr - 6), (bx + kr + 6, knob_y + kr + 6)], fill=(*c_base, 50))
-    d.ellipse([(bx - kr, knob_y - kr), (bx + kr, knob_y + kr)], fill=(*c_base, 255))
+        d.rounded_rectangle(
+            [(bx - bw//2, by_top), (bx + bw//2, knob_y)],
+            radius=4,
+            fill=(*c_base, 255)
+        )
+
+    # glow rings
+    d.ellipse(
+        [(bx - kr - 16, knob_y - kr - 16),
+         (bx + kr + 16, knob_y + kr + 16)],
+        fill=(*c_base, 35)
+    )
+
+    d.ellipse(
+        [(bx - kr - 9, knob_y - kr - 9),
+         (bx + kr + 9, knob_y + kr + 9)],
+        fill=(*c_base, 70)
+    )
+
+    # main knob
+    d.ellipse(
+        [(bx - kr, knob_y - kr),
+         (bx + kr, knob_y + kr)],
+        fill=(*c_base, 255)
+    )
+
     return Image.alpha_composite(base.convert("RGBA"), layer).convert("RGB")
 
 
