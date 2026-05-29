@@ -204,8 +204,8 @@ async def is_thumbmode(chat_id: int) -> bool:
     user = await thumbdb.find_one({"chat_id": chat_id})
 
     if not user:
-        thumbmode[chat_id] = True
-        return True
+        thumbmode[chat_id] = False
+        return False
 
     mode = bool(user["mode"])
     thumbmode[chat_id] = mode
