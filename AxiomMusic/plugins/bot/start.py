@@ -138,7 +138,6 @@ async def start_pm(client, message: Message, _):
         photo=random.choice(Manav),  # ✅ RANDOM IMAGE FIXED
         has_spoiler=True,
         protect_content=True,
-        message_effect_id=random.choice(EFFECT_ID),
         caption=_["start_2"].format(message.from_user.mention, app.mention),
         reply_markup=InlineKeyboardMarkup(out),
     )
