@@ -19,7 +19,7 @@ from pyrogram.types import InlineKeyboardButton
 from AxiomMusic.utils.formatters import time_to_seconds
 from AxiomMusic import app
 from pyrogram.enums import ButtonStyle
-from Oneforall.utils.stream.thumbnail import get_thumbnail_status
+from AxiomMusic.utils.stream.thumbnail import get_thumbnail_status
 
 def track_markup(_, videoid, user_id, channel, fplay):
     buttons = [
