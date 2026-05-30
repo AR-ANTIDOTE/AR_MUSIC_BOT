@@ -81,7 +81,6 @@ def stream_markup_timer(_, chat_id, played, dur):
             InlineKeyboardButton(
                 text=f"{played} {bar} {dur}",
                 url=f"https://t.me/{app.username}?startgroup=true",
-                style=ButtonStyle.SUCCESS,
             )
         ],
         [
@@ -95,8 +94,8 @@ def stream_markup_timer(_, chat_id, played, dur):
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}"),
         ]
         [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_20", style=ButtonStyle.PRIMARY), 
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_20", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_20"), 
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_20"),
         ],
         [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close")],
     ]
