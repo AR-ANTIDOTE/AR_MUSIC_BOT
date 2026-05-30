@@ -23,6 +23,7 @@ autoenddb = mongodb.autoend
 autoplaydb = mongodb.autoplay
 autoplayhistorydb = mongodb.autoplayhistory
 assdb = mongodb.assistants
+thumbdb = mongodb.thumbnail
 blacklist_chatdb = mongodb.blacklistChat
 blockeddb = mongodb.blockedusers
 chatsdb = mongodb.chats
