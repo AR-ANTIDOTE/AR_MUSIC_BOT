@@ -7,10 +7,21 @@ from AxiomMusic.misc import SUDOERS
 from AxiomMusic.utils.database import is_thumbmode, thumb_off, thumb_on
 from config import BANNED_USERS
 
+THUMB_STATES = ["on", "off", "enable", "disable", "enabled", "disabled"]
+
+
+async def can_toggle_thumbnail(chat_id: int, user_id: int) -> bool:
+    try:
+        if user_id in SUDOERS:
+            return True
+    except Exception:
+        pass
+
 
 async def can_toggle_thumbnail(chat_id: int, user_id: int) -> bool:
     if user_id in SUDOERS:
         return True
+
     try:
         member = await app.get_chat_member(chat_id, user_id)
     except Exception:
@@ -21,8 +32,27 @@ async def can_toggle_thumbnail(chat_id: int, user_id: int) -> bool:
     return bool(
         member.status == ChatMemberStatus.ADMINISTRATOR
         and privileges
+
+        and (
+            getattr(privileges, "can_manage_video_chats", False)
+            or getattr(privileges, "can_manage_chat", False)
+        )
+    )
+
+
+def parse_thumb_state(message: Message):
+    text = (message.text or message.caption or "").strip()
+    parts = text.split()
+    if len(parts) < 2:
+        return None
+    state = parts[1].lower()
+    return state if state in THUMB_STATES else None
+
+
+
         and (getattr(privileges, "can_manage_video_chats", False) or getattr(privileges, "can_manage_chat", False))
     )
+
 
 
 def thumbnail_markup(status: bool):
@@ -49,20 +79,42 @@ def thumbnail_text(status: bool):
         "<blockquote>Disabled hone par /play ke baad custom generated "
         "thumbnail PNG nahi banegi; bot normal streaming card/buttons ke saath "
         "default image use karega.</blockquote>\n\n"
+
+        "<b>Commands:</b> <code>/thumb</code> | <code>/thumb on</code> | <code>/thumb off</code>"
+
         "<b>Quick use:</b> <code>/thumb on</code> | <code>/thumb off</code>"
+
     )
 
 
 @app.on_message(
+
+    filters.command(["thumb", "thumbnail", "thum"], prefixes=["/", "!", "."])
+    & ~BANNED_USERS,
+    group=-50,
+
     filters.regex(r"(?i)^[!/.](thumbnail|thumb|thum)(?:@\w+)?(?:\s+(on|off|enable|disable|enabled|disabled))?\s*$")
     & filters.group
     & ~BANNED_USERS
+
 )
 async def thumbnail_cmd(_, message: Message):
     if not message.from_user:
         return await message.reply_text("<b>Please use this command from a user account.</b>")
 
     chat_id = message.chat.id
+
+    requested_state = parse_thumb_state(message)
+
+    if requested_state in THUMB_STATES:
+        if not await can_toggle_thumbnail(chat_id, message.from_user.id):
+            return await message.reply_text("<b>Only admins can change thumbnail mode.</b>")
+        status = requested_state in ["on", "enable", "enabled"]
+        if status:
+            await thumb_on(chat_id)
+        else:
+            await thumb_off(chat_id)
+
     requested_state = message.matches[0].group(2).lower() if message.matches and message.matches[0].group(2) else None
 
     if requested_state in ["on", "enable", "enabled"]:
@@ -75,6 +127,7 @@ async def thumbnail_cmd(_, message: Message):
             return await message.reply_text("<b>Only admins can change thumbnail mode.</b>")
         await thumb_off(chat_id)
         status = False
+
     else:
         status = await is_thumbmode(chat_id)
 
@@ -83,6 +136,30 @@ async def thumbnail_cmd(_, message: Message):
         reply_markup=thumbnail_markup(status),
         disable_web_page_preview=True,
     )
+
+
+
+@app.on_callback_query(filters.regex(r"^thumbnail_toggle\|(on|off)$") & ~BANNED_USERS, group=-50)
+async def thumbnail_callback(_, callback_query: CallbackQuery):
+    state = callback_query.data.split("|", 1)[1]
+    chat_id = callback_query.message.chat.id
+
+    if not await can_toggle_thumbnail(chat_id, callback_query.from_user.id):
+        return await callback_query.answer(
+            "Only admins can change thumbnail mode.", show_alert=True
+        )
+
+    status = state == "on"
+    if status:
+        await thumb_on(chat_id)
+    else:
+        await thumb_off(chat_id)
+
+    await callback_query.answer(
+        f"Thumbnail {'enabled ✅' if status else 'disabled ❌'}",
+        show_alert=True,
+    )
+
 
 
 @app.on_callback_query(filters.regex(r"^thumbnail_toggle\|(on|off)$") & ~BANNED_USERS)
@@ -203,6 +280,7 @@ async def thumbnail_callback(_, callback_query: CallbackQuery, __):
         alert = "Thumbnail disabled ❌"
 
     await callback_query.answer(alert, show_alert=True)
+
     await callback_query.edit_message_text(
         thumbnail_text(status),
         reply_markup=thumbnail_markup(status),

@@ -200,6 +200,33 @@ async def skip_off(chat_id: int):
 # THUMBNAIL MODE
 # ==========================================
 
+def _bool_mode(value, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "on", "enable", "enabled", "yes", "1"}:
+            return True
+        if normalized in {"false", "off", "disable", "disabled", "no", "0", ""}:
+            return False
+    return default
+
+
+async def is_thumbmode(chat_id: int) -> bool:
+    user = await thumbdb.find_one({"chat_id": chat_id})
+
+    if not user:
+        thumbmode[chat_id] = False
+        return False
+
+    mode = _bool_mode(user.get("mode"), default=False)
+    thumbmode[chat_id] = mode
+    return mode
+
 async def is_thumbmode(chat_id: int) -> bool:
     user = await thumbdb.find_one({"chat_id": chat_id})
 
@@ -210,6 +237,7 @@ async def is_thumbmode(chat_id: int) -> bool:
     mode = bool(user["mode"])
     thumbmode[chat_id] = mode
     return mode
+
 
 
 async def thumb_on(chat_id: int):
@@ -234,9 +262,15 @@ async def thumb_off(chat_id: int):
 async def is_autoplay(chat_id: int) -> bool:
     mode = autoplay.get(chat_id)
     if mode is not None:
+
+        return _bool_mode(mode, default=False)
+    user = await autoplaydb.find_one({"chat_id": chat_id})
+    mode = _bool_mode(user.get("mode") if user else None, default=False)
+
         return mode
     user = await autoplaydb.find_one({"chat_id": chat_id})
     mode = bool(user and user.get("mode", False))
+
     autoplay[chat_id] = mode
     return mode
 

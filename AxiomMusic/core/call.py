@@ -30,7 +30,10 @@ from AxiomMusic.utils.exceptions import AssistantErr
 from AxiomMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
 from AxiomMusic.utils.inline.play import stream_markup
 from AxiomMusic.utils.stream.autoclear import auto_clean
+from AxiomMusic.utils.stream.autoplay import maybe_refetch_autoplay, queue_autoplay_tracks
+
 from AxiomMusic.utils.stream.queue import put_queue
+
 from AxiomMusic.utils.thumbnails import get_thumb
 from strings import get_string
 
@@ -324,6 +327,9 @@ class Call(PyTgCalls):
 
   
     async def _queue_autoplay_track(self, chat_id: int, last_track: dict, _):
+
+        return bool(await queue_autoplay_tracks(chat_id, last_track, limit=1))
+
         if not last_track:
             return False
 
@@ -438,6 +444,7 @@ class Call(PyTgCalls):
         return True
 
 
+
     async def change_stream(self, client: PyTgCalls, chat_id: int):
         await delete_old_message(chat_id)
         check = db.get(chat_id)
@@ -474,7 +481,11 @@ class Call(PyTgCalls):
 
                                         "⋞ ᴄʟᴏsє ⋟", callback_data="close"
 
+
+                                        "⋞ ᴄʟᴏsє ⋟", callback_data="close"
+
                                         "⋞ ᴄʟᴏsє ⋟", callback_data="close_message"
+
 
 
                                     ),
@@ -495,6 +506,11 @@ class Call(PyTgCalls):
                     except Exception:
                         pass
                     return await client.leave_call(chat_id, close=False)
+
+            elif popped:
+                await maybe_refetch_autoplay(chat_id, popped)
+
+
         except Exception:
             try:
                 await _clear_(chat_id)
@@ -551,11 +567,10 @@ class Call(PyTgCalls):
         video = True if str(streamtype) == "video" else False
         thumb_enabled = await is_thumbmode(original_chat_id)
 
+
         thumb_enabled = await is_thumbmode(original_chat_id)
 
         thumb_enabled = await is_thumbmode(chat_id)
-
-
 
 
         if "live_" in queued:
