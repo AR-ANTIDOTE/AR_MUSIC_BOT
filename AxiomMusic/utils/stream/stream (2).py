@@ -5,8 +5,8 @@ from typing import Union
 from pyrogram.types import InlineKeyboardMarkup
 
 import config
-from Oneforall import YouTube, app, Carbon
-from Oneforall.core.call import Hotty
+from AxiomMusic import YouTube, app, Carbon
+from AxiomMusic.core.call import Axiomm
 
 # Define a dictionary to track the last message timestamp for each user
 user_last_message_time = {}
@@ -20,21 +20,21 @@ from pyrogram.types import InlineKeyboardMarkup
 from py_yt import VideosSearch
 
 import config
-from Oneforall import Carbon, YouTube, app
-from Oneforall.core.call import Hotty
-from Oneforall.misc import db
-from Oneforall.utils.database import add_active_video_chat, is_active_chat
-from Oneforall.utils.exceptions import AssistantErr
-from Oneforall.utils.inline import (
+from AxiomMusic import Carbon, YouTube, app
+from AxiomMusic.core.call import Axiomm
+from AxiomMusic.misc import db
+from AxiomMusic.utils.database import add_active_video_chat, is_active_chat
+from AxiomMusic.utils.exceptions import AssistantErr
+from AxiomMusic.utils.inline import (
     aq_markup,
     close_markup,
     stream_markup,
     stream_markup2,
 )
-from Oneforall.utils.stream.queue import put_queue, put_queue_index
+from AxiomMusic.utils.stream.queue import put_queue, put_queue_index
 # PREMIUM THUMBNAIL IMPORT
-from Oneforall.utils.thumbnails import get_thumb
-from Oneforall.utils.stream.thumbnail import get_thumbnail_status
+from AxiomMusic.utils.thumbnails import get_thumb
+from AxiomMusic.utils.stream.thumbnail import get_thumbnail_status
 
 
 async def stream(
@@ -103,7 +103,7 @@ async def stream(
                     )
                 except:
                     await mystic.edit_text(_["play_3"])
-                await Hotty.join_call(
+                await Axiomm.join_call(
                     chat_id,
                     original_chat_id,
                     file_path,
@@ -157,7 +157,7 @@ async def stream(
         if count == 0:
             return
         else:
-            link = await brandedBin(msg)
+            link = await AxiommBin(msg)
             lines = msg.count("\n")
             if lines >= 17:
                 car = os.linesep.join(msg.split(os.linesep)[:17])
@@ -224,7 +224,7 @@ async def stream(
         else:
             if not forceplay:
                 db[chat_id] = []
-            await Hotty.join_call(
+            await Axiomm.join_call(
                 chat_id,
                 original_chat_id,
                 file_path,
@@ -301,7 +301,7 @@ async def stream(
         else:
             if not forceplay:
                 db[chat_id] = []
-            await Hotty.join_call(chat_id, original_chat_id, file_path, video=None)
+            await Axiomm.join_call(chat_id, original_chat_id, file_path, video=None)
             await put_queue(
                 chat_id,
                 original_chat_id,
@@ -366,7 +366,7 @@ async def stream(
         else:
             if not forceplay:
                 db[chat_id] = []
-            await Hotty.join_call(chat_id, original_chat_id, file_path, video=status)
+            await Axiomm.join_call(chat_id, original_chat_id, file_path, video=status)
             await put_queue(
                 chat_id,
                 original_chat_id,
@@ -508,7 +508,7 @@ async def stream(
         else:
             if not forceplay:
                 db[chat_id] = []
-            await Hotty.join_call(
+            await Axiomm.join_call(
                 chat_id,
                 original_chat_id,
                 link,
