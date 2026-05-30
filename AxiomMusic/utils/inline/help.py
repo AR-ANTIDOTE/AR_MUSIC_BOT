@@ -15,16 +15,17 @@
 
 from typing import Union
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-
+from pyrogram.enums import ButtonStyle 
 from AxiomMusic import app
 
 
 def help_pannel(_, START: Union[bool, int] = None):
-    first = [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data=f"close")]
+    first = [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data=f"close"), style=ButtonStyle.SUCCESS]
     second = [
         InlineKeyboardButton(
             text=_["BACK_BUTTON"],
             callback_data=f"settingsback_helper",
+			style=ButtonStyle.PRIMARY,
         ),
     ]
     mark = second if START else first
@@ -34,48 +35,58 @@ def help_pannel(_, START: Union[bool, int] = None):
 	        InlineKeyboardButton(
                     text=_["H_B_34"],
                     callback_data="help_callback hb10",
+				    style=ButtonStyle.DANGER,
 		)
 	    ],    
             [
                 InlineKeyboardButton(
                     text=_["H_B_25"],
                     callback_data="help_callback hb1",
+					style=ButtonStyle.DANGER,
                 ),
                 InlineKeyboardButton(
                     text=_["H_B_26"],
                     callback_data="help_callback hb2",
+					style=ButtonStyle.DANGER,
                 ),
                 InlineKeyboardButton(
                     text=_["H_B_28"],
                     callback_data="help_callback hb3",
+					style=ButtonStyle.DANGER,
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text=_["H_B_27"],
                     callback_data="help_callback hb4",
+					style=ButtonStyle.DANGER,
                 ),
                 InlineKeyboardButton(
                     text=_["H_B_31"],
                     callback_data="help_callback hb5",
+					style=ButtonStyle.DANGER,
                 ),
                 InlineKeyboardButton(
                     text=_["H_B_29"],
                     callback_data="help_callback hb6",
+					style=ButtonStyle.DANGER,
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text=_["H_B_33"],
                     callback_data="help_callback hb7",
+					style=ButtonStyle.DANGER,
                 ),
                 InlineKeyboardButton(
                     text=_["H_B_30"],
                     callback_data="help_callback hb8",
+					style=ButtonStyle.DANGER,
                 ),
                 InlineKeyboardButton(
                     text=_["H_B_32"],
                     callback_data="help_callback hb9",
+					style=ButtonStyle.DANGER,
                 ),
             ],
             mark,
