@@ -122,7 +122,7 @@ async def stream(
                     forceplay=forceplay,
                 )
                 img = await get_thumb(vidid)
-                button = stream_markup(_, vidid, chat_id)
+                button = stream_markup(_, chat_id)
                 
                 # Check thumbnail status
                 thumb_status = get_thumbnail_status(chat_id)
@@ -243,7 +243,7 @@ async def stream(
                 forceplay=forceplay,
             )
             img = await get_thumb(vidid)
-            button = stream_markup(_, vidid, chat_id)
+            button = stream_markup(_, chat_id)
             
             # Check thumbnail status
             thumb_status = get_thumbnail_status(chat_id)
