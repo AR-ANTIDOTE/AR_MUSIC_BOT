@@ -26,14 +26,10 @@ from strings import get_string
 
 # 🎆 Message Effects
 EFFECT_ID = [
-    5104841245755180586,
+    5046509860389126442,
     5107584321108051014,
     5104841245755180586,
-    5107584321108051014,
-    5104841245755180586,
-    5107584321108051014,
-    5104841245755180586,
-    5107584321108051014,
+    5159385139981059251,
 ]
 
 # 🌄 Random Start Images
@@ -67,10 +63,10 @@ async def start_pm(client, message: Message, _):
             keyboard = help_pannel(_)
             return await message.reply_photo(
                         photo=random.choice(Manav),  
-                has_spoiler=True,
-                caption=_["help_1"].format(config.SUPPORT_CHAT),
-                reply_markup=keyboard,
-            )
+                        has_spoiler=True,
+                        caption=_["help_1"].format(config.SUPPORT_CHAT),
+                        reply_markup=keyboard,
+                  )
 
         
         if name.startswith("sud"):
@@ -142,7 +138,7 @@ async def start_pm(client, message: Message, _):
         photo=random.choice(Manav),  # ✅ RANDOM IMAGE FIXED
         has_spoiler=True,
         protect_content=True,
-       message_effect_id=random.choice(EFFECT_ID),
+        message_effect_id=random.choice(EFFECT_ID),
         caption=_["start_2"].format(message.from_user.mention, app.mention),
         reply_markup=InlineKeyboardMarkup(out),
     )
