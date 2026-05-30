@@ -25,7 +25,7 @@ def help_pannel(_, START: Union[bool, int] = None):
         InlineKeyboardButton(
             text=_["BACK_BUTTON"],
             callback_data=f"settingsback_helper",
-			style=ButtonStyle.PRIMARY,
+			style=ButtonStyle.SUCCESS,
         ),
     ]
     mark = second if START else first
@@ -35,7 +35,7 @@ def help_pannel(_, START: Union[bool, int] = None):
 	        InlineKeyboardButton(
                     text=_["H_B_34"],
                     callback_data="help_callback hb10",
-				    style=ButtonStyle.DANGER,
+				    style=ButtonStyle.PRIMARY,
 		)
 	    ],    
             [
