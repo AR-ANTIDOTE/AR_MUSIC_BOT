@@ -80,14 +80,12 @@ def autoplay_text(status: bool):
     return (
         "<b>♬ ᴀᴜᴛᴏᴘʟᴀʏ sᴇᴛᴛɪɴɢs</b>\n\n"
         f"<b>ᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs:</b> {current}\n\n"
-        "<blockquote>Enable hone par queue empty hote hi bot YouTube se related "
-        "next song fetch karke play karega, VC leave nahi karega.</blockquote>\n\n"
         "<b>Commands:</b> <code>/autoplay</code> | <code>/autoplay on</code> | "
         "<code>/autoplay off</code>"
     )
 
 
-@app.on_message(filters.command(["autoplay", "aplay"], prefixes=["/", "!", ".", ""]) & filters.group & ~BANNED_USERS)
+@app.on_message(filters.command(["autoplay", "aplay", "ap"], prefixes=["/", "!", ".", ""]) & filters.group & ~BANNED_USERS)
 @AdminActual
 async def autoplay_command(_, message: Message, __):
     if not message.from_user:
