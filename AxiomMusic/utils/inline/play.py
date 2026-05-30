@@ -19,6 +19,7 @@ from pyrogram.types import InlineKeyboardButton
 from AxiomMusic.utils.formatters import time_to_seconds
 from AxiomMusic import app
 from pyrogram.enums import ButtonStyle
+from Oneforall.utils.stream.thumbnail import get_thumbnail_status
 
 def track_markup(_, videoid, user_id, channel, fplay):
     buttons = [
@@ -67,6 +68,14 @@ def stream_markup_timer(_, chat_id, played, dur):
         bar = "┃┊————————♡—┊┃"
     else:
         bar = "┃┊—————————♡┊┃"
+
+    thumb_status = get_thumbnail_status(chat_id)
+
+    thumb_text = (
+        "🖼 ᴛʜᴜᴍʙɴᴀɪʟ : ᴏɴ"
+        if thumb_status == "on"
+        else "🖼 ᴛʜᴜᴍʙɴᴀɪʟ : ᴏғғ"
+    )
     buttons = [
         [
             InlineKeyboardButton(
@@ -82,6 +91,9 @@ def stream_markup_timer(_, chat_id, played, dur):
             InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}"), 
             InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
         ],
+        [
+            InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}")
+        ]
         [
             InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_20", style=ButtonStyle.PRIMARY), 
             InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_20", style=ButtonStyle.PRIMARY),
