@@ -55,7 +55,7 @@ async def stream(
     intro_url = "https://graph.org/file/29d71d09801ca0ae55cd8-4832d851713ae41c8f.mp4"  #made by @sukuna_Dev
 
     if forceplay:
-        await Hotty.force_stop_stream(chat_id)
+        await Axiomm.force_stop_stream(chat_id)
     if streamtype == "playlist":
         msg = f"{_['play_19']}\n\n"
         count = 0
@@ -432,7 +432,7 @@ async def stream(
             n, file_path = await YouTube.video(link)
             if n == 0:
                 raise AssistantErr(_["str_3"])
-            await Hotty.join_call(
+            await Axiomm.join_call(
                 chat_id,
                 original_chat_id,
                 file_path,
