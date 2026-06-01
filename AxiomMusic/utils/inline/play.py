@@ -84,6 +84,7 @@ def stream_markup_timer(_, chat_id, played, dur):
             style=ButtonStyle.SUCCESS,
         )
     ],
+    ],
     [
         InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}", style=ButtonStyle.DANGER),
         InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}", style=ButtonStyle.DANGER),
