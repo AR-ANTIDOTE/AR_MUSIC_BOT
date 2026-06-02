@@ -82,9 +82,6 @@ async def userinfo(_, message: Message):
                 [
                     [
                         InlineKeyboardButton("👤 ᴜsᴇʀ ᴘʀᴏғɪʟᴇ", url=profile_url)
-                    ],
-                    [
-                        InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
                     ]
                     
                 ]
