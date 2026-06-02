@@ -28,15 +28,13 @@ def lanuages_keyboard(_):
     keyboard.add(
         *[
             (
-                InlineKeyboardButton(text=languages_present[i], callback_data=f"languages:{i}"),
-                InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
+                InlineKeyboardButton(text=languages_present[i], callback_data=f"languages:{i}")
             )
             for i in languages_present
         ]
     )
     keyboard.row(
         InlineKeyboardButton(text=_["BACK_BUTTON"], callback_data=f"settingsback_helper"),
-        InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112"),
         InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data=f"close")
     )
     return keyboard
