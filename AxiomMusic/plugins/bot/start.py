@@ -34,7 +34,7 @@ EFFECT_ID = [
 
 # 🌄 Random Start Images
 Manav = [
-    "https://files.catbox.moe/m4fx24.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
 ]
 
 # 🍓 Random Reactions — strawberry + 4 extras, changes every start
