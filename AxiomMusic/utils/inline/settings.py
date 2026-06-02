@@ -29,8 +29,7 @@ def setting_markup(_):
             InlineKeyboardButton(text=_["ST_B_4"], callback_data="VM"),
         ],
         [
-            InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close"),
-            InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
+            InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close")
         ],
     ]
     return buttons
