@@ -225,7 +225,6 @@ async def song_helper_cb(client, CallbackQuery, _):
                 text=_["BACK_BUTTON"],
                 callback_data=f"song_back {stype}|{vidid}",
             ),
-            InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112"),
             InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data=f"close"),
         )
 
@@ -266,8 +265,7 @@ async def song_helper_cb(client, CallbackQuery, _):
             to = f"{ap} = {sz}"
 
             keyboard.row(
-                InlineKeyboardButton(text=to, callback_data=f"song_download {stype}|{x['format_id']}|{vidid}"),
-                InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
+                InlineKeyboardButton(text=to, callback_data=f"song_download {stype}|{x['format_id']}|{vidid}")
             )
 
         keyboard.row(
@@ -275,7 +273,6 @@ async def song_helper_cb(client, CallbackQuery, _):
                 text=_["BACK_BUTTON"],
                 callback_data=f"song_back {stype}|{vidid}",
             ),
-            InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112"),
             InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data=f"close"),
         )
 
