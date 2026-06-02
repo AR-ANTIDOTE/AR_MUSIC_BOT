@@ -24,9 +24,9 @@ from AxiomMusic.utils.inline import supp_markup
 from config import BANNED_USERS, PING_IMG_URL
 
 Axiomm_PIC = [
-    "https://files.catbox.moe/m4fx24.jpg",
-    "https://files.catbox.moe/m4fx24.jpg",
-    "https://files.catbox.moe/m4fx24.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
 ]
 
 @app.on_message(filters.command(["ping", "alive"]) & ~BANNED_USERS)
