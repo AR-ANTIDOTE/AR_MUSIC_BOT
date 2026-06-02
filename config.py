@@ -37,7 +37,7 @@ SONG_DOWNLOAD_DURATION_LIMIT = int(time_to_seconds(f"{SONG_DOWNLOAD_DURATION}:00
 LOGGER_ID = int(getenv("LOGGER_ID", "-1003991995988"))
 OWNER_ID = int(getenv("OWNER_ID", "7169279112"))
 OWNER_USERNAME = getenv("OWNER_USERNAME", "@III_MAA7NAV_III") 
-BOT_USERNAME = getenv("BOT_USERNAME", "@vcmnvbot")
+BOT_USERNAME = getenv("BOT_USERNAME", "@vcxmnvbot")
 
 # ✅ Command Handler
 COMMAND_HANDLER = getenv("COMMAND_HANDLER", "! / .").split()
@@ -53,7 +53,7 @@ GIT_TOKEN = getenv("GIT_TOKEN", "")  # Only for private repo
 
 # ✅ Support Links
 SUPPORT_CHANNEL = getenv("SUPPORT_CHANNEL", "https://t.me/axiombots")
-SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/manavkiduniya")
+SUPPORT_CHAT = getenv("SUPPORT_CHAT", "https://t.me/axlomm")
 
 
 PLAYLIST_ID = "-1003991995988"
@@ -110,18 +110,18 @@ userstats = {}
 clean = []
 
 # ✅ UI Images
-START_IMG_URL = getenv("START_IMG_URL", "https://files.catbox.moe/kjdsse.jpg")
-PING_IMG_URL = getenv("PING_IMG_URL", "https://files.catbox.moe/kjdsse.jpg")
-PLAYLIST_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-STATS_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-TELEGRAM_AUDIO_URL = "https://files.catbox.moe/kjdsse.jpg"
-TELEGRAM_VIDEO_URL = "https://files.catbox.moe/kjdsse.jpg"
-STREAM_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-SOUNCLOUD_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-YOUTUBE_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-SPOTIFY_ARTIST_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-SPOTIFY_ALBUM_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
-SPOTIFY_PLAYLIST_IMG_URL = "https://files.catbox.moe/kjdsse.jpg"
+START_IMG_URL = getenv("START_IMG_URL", "https://litter.catbox.moe/8569kh.jpg")
+PING_IMG_URL = getenv("PING_IMG_URL", "https://litter.catbox.moe/8569kh.jpg")
+PLAYLIST_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+STATS_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+TELEGRAM_AUDIO_URL = "https://litter.catbox.moe/8569kh.jpg"
+TELEGRAM_VIDEO_URL = "https://litter.catbox.moe/8569kh.jpg"
+STREAM_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+SOUNCLOUD_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+YOUTUBE_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+SPOTIFY_ARTIST_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+SPOTIFY_ALBUM_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
+SPOTIFY_PLAYLIST_IMG_URL = "https://litter.catbox.moe/8569kh.jpg"
 
 # ✅ URL Validation
 if SUPPORT_CHANNEL and not re.match(r"(?:http|https)://", SUPPORT_CHANNEL):
