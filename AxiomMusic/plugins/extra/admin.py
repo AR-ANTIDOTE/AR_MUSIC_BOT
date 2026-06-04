@@ -46,8 +46,7 @@ kickpic = [
 
 button = [
     [
-        InlineKeyboardButton(text="ᴜᴘᴅᴀᴛᴇs", url="https://t.me/Axiombots"),
-        InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
+        InlineKeyboardButton(text="ᴜᴘᴅᴀᴛᴇs", url="https://t.me/Axiombots")
     ]
 ]
 

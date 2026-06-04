@@ -39,14 +39,12 @@ def queue_markup(
     ]
     dur = [
         [
-            InlineKeyboardButton(text=_["QU_B_2"].format(played, dur), callback_data="GetTimer"),
-            InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112")
+            InlineKeyboardButton(text=_["QU_B_2"].format(played, dur), callback_data="GetTimer")
         ],
         [
             InlineKeyboardButton(
                 text=_["QU_B_1"],
                 callback_data=f"GetQueued {CPLAY}|{videoid}"),
-            InlineKeyboardButton(" ⌯ ᴅєᴠєʟᴏᴘєꝛ​ ⌯ ", url="tg://user?id=7169279112"),
             InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close"),
         ],
     ]
