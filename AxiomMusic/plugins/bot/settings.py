@@ -66,9 +66,9 @@ from AxiomMusic.utils.inline.start import private_panel
 from config import BANNED_USERS, OWNER_ID
 
 Axiomm_PIC = [
-    "https://files.catbox.moe/m4fx24.jpg",
-    "https://files.catbox.moe/m4fx24.jpg",
-    "https://files.catbox.moe/m4fx24.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
 ]
 
 
