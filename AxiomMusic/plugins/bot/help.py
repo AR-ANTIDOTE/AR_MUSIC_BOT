@@ -26,9 +26,9 @@ from config import BANNED_USERS, SUPPORT_CHAT
 from strings import get_string, helpers
 
 Axiomm_PIC = [
-    "https://files.catbox.moe/m4fx24.jpg",
-    "https://files.catbox.moe/m4fx24.jpg",
-    "https://files.catbox.moe/m4fx24.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
+    "https://litter.catbox.moe/8569kh.jpg",
 ]
 
 
