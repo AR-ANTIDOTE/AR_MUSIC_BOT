@@ -56,22 +56,22 @@ def stream_markup_timer(_, chat_id, played, dur):
         bar_style = ButtonStyle.PRIMARY
     elif 10 < ufff < 20:
         bar = "┃┊—♡————————┊┃"
-        bar_style = ButtonStyle.PRIMARY
+        bar_style = ButtonStyle.SUCCESS
     elif 20 <= ufff < 30:
         bar = "┃┊——♡———————┊┃"
-        bar_style = ButtonStyle.PRIMARY
+        bar_style = ButtonStyle.DANGER
     elif 30 <= ufff < 40:
         bar = "┃┊———♡——————┊┃"
         bar_style = ButtonStyle.PRIMARY
     elif 40 <= ufff < 50:
         bar = "┃┊————♡—————┊┃"
-        bar_style = ButtonStyle.PRIMARY
+        bar_style = ButtonStyle.SUCCESS
     elif 50 <= ufff < 60:
         bar = "┃┊—————♡————┊┃"
-        bar_style = ButtonStyle.SUCCESS
+        bar_style = ButtonStyle.DANGER
     elif 60 <= ufff < 70:
         bar = "┃┊——————♡———┊┃"
-        bar_style = ButtonStyle.SUCCESS
+        bar_style = ButtonStyle.PRIMARY
     elif 70 <= ufff < 80:
         bar = "┃┊———————♡——┊┃"
         bar_style = ButtonStyle.SUCCESS
@@ -80,7 +80,7 @@ def stream_markup_timer(_, chat_id, played, dur):
         bar_style = ButtonStyle.DANGER
     else:
         bar = "┃┊—————————♡┊┃"
-        bar_style = ButtonStyle.DANGER
+        bar_style = ButtonStyle.PRIMARY
 
     thumb_status = get_thumbnail_status(chat_id)
 
@@ -113,9 +113,9 @@ def stream_markup_timer(_, chat_id, played, dur):
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style,),
         ],
         [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_20", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=ButtonStyle.PRIMARY),
             InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_20", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=ButtonStyle.PRIMARY),
         ]
     ]
     return buttons
