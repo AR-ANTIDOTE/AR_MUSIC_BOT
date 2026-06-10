@@ -12,11 +12,19 @@
 # ❤️ Made with dedication and love by AxiomBots
 # -----------------------------------------------
 
+import random
 from typing import Union
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ButtonStyle
 
+def axiombtn():
+    return random.choice([
+        ButtonStyle.SUCCESS,
+        ButtonStyle.DANGER,
+        ButtonStyle.PRIMARY
+    ])
+    
 def queue_markup(
     _,
     DURATION,
@@ -73,15 +81,15 @@ def queue_back_markup(_, CPLAY):
 def aq_markup(_, chat_id):
     buttons = [
         [
-            InlineKeyboardButton(text="ʏᴛ-ᴀᴘɪ sᴛᴀᴛυs 📼", callback_data="api_status", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton(text="ʏᴛ-ᴀᴘɪ sᴛᴀᴛυs 📼", callback_data="api_status", style=axiombtn()),
         ],
         [
-            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=ButtonStyle.DANGER), 
-            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=ButtonStyle.DANGER), 
-            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=ButtonStyle.DANGER),
+            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}", style=axiombtn()),
+            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}", style=axiombtn()),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=axiombtn()), 
+            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=axiombtn()), 
+            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=axiombtn()),
         ],
-        [InlineKeyboardButton(text="ᴄʟᴏsᴇ", callback_data="close")]
+        [InlineKeyboardButton(text="ᴄʟᴏsᴇ", callback_data="close", style=ButtonStyle.DANGER)]
     ]
     return buttons
