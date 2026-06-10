@@ -13,6 +13,8 @@
 # -----------------------------------------------
 
 
+import random
+import asyncio
 import math
 import config
 from pyrogram.types import InlineKeyboardButton
@@ -21,7 +23,27 @@ from AxiomMusic import app
 from pyrogram.enums import ButtonStyle
 from AxiomMusic.utils.stream.thumbnail import get_thumbnail_status
 
+def random_style():
+    return random.choice([
+        ButtonStyle.SUCCESS,
+        ButtonStyle.DANGER,
+        ButtonStyle.PRIMARY
+    ])
 
+async def auto_button_animation(message, chat_id, get_keyboard_func):
+    while True:
+        try:
+            await asyncio.sleep(5)
+
+            markup = InlineKeyboardMarkup(
+                get_keyboard_func(chat_id)
+            )
+
+            await message.edit_reply_markup(reply_markup=markup)
+
+        except Exception:
+            break
+            
 def track_markup(_, videoid, user_id, channel, fplay):
     buttons = [
         [
@@ -104,18 +126,18 @@ def stream_markup_timer(_, chat_id, played, dur):
             )
         ],
         [
-            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=ButtonStyle.DANGER),
+            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=random_style()),
         ],
         [
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style,),
         ],
         [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=ButtonStyle.PRIMARY),
-            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=ButtonStyle.DANGER),
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
         ]
     ]
     return buttons
@@ -131,8 +153,8 @@ def stream_markup(_, chat_id):
             InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
         ],
         [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_20"),
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_20"),
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25"),
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25"),
         ],
         [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close")],
     ]
