@@ -61,8 +61,8 @@ PLAYLIST_ID = "-1003991995988"
 
 
 # Vars For API End Pont.
-YTPROXY_URL = getenv("YTPROXY_URL", 'https://tgapi.xbitcode.com') ## xBit Music Endpoint.
-YT_API_KEY = getenv("YT_API_KEY" , 'xbit_HZlx-3yc9HWPdqkCyFTJIMkHyUDo6BrD' ) ## Your API key like: xbit_10000000xx0233 Get from  https://t.me/tgmusic_apibot
+YTPROXY_URL = getenv("YTPROXY_URL", 'https://api.shrutibots.site') ## xBit Music Endpoint.
+YT_API_KEY = getenv("YT_API_KEY" , 'ShrutiBotsx7llDDmWnF986ygx9seT' ) ## Your API key like: xbit_10000000xx0233 Get from  https://t.me/tgmusic_apibot
 YOUTUBE_DATA_API_KEY = getenv("YOUTUBE_DATA_API_KEY", "INFLEX90156228D")  ## Google YouTube Data API v3 key
 
 # NexGen API (Fallback after Shruti) — https://console.nexgenbots.xyz
