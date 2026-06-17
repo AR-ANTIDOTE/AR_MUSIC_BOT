@@ -7,68 +7,67 @@ from AxiomMusic.misc import db
 from AxiomMusic.utils.database import is_autoplay
 from AxiomMusic.utils.stream.queue import put_queue
 
-AUTOPLAY_BATCH_SIZE = 10
-AUTOPLAY_REFETCH_THRESHOLD = 2
+AUTOPLAY_BATCH_SIZE = 100
+AUTOPLAY_REFETCH_THRESHOLD = 50
 _autoplay_fetching = {}
-
-# --- HISTORY STRUCTURE (Stores both Video IDs and Cleaned Titles) ---
-# Format: { chat_id: {"vids": set(), "titles": set()} }
 PLAYED_HISTORY = {}
 
-# Keywords that indicate a version/mix/jukebox (Instant Reject)
 BAD_KEYWORDS = [
     "jukebox", "mix", "album", "compilation", "playlist", 
     "lofi", "slowed", "reverb", "sped up", "8d", "bass boosted", 
-    "remix", "mashup", "cover", "acoustic", "unplugged", "live performance"
+    "remix", "mashup", "cover", "acoustic", "unplugged", "live",
+    "lyrics", "lyrical", "full video", "official video", "video"
 ]
 
-def get_base_title(title: str) -> str:
-    """
-    Extracts the core song name to prevent duplicate versions.
-    Example: 'Sanam Re - Lofi Flip - Arijit Singh' -> 'sanam re'
-    """
-    if not title: return ""
-    # 1. Split by separators to get the main part (before artist name or extra info)
-    parts = re.split(r'\s[-|]\s|\sft\.\s|\sfeat\.\s|\sfrom\s', title, flags=re.IGNORECASE)
-    main_part = parts[0]
+def clean_title(title: str) -> str:
+    """Aggressively clean title to get ONLY the song name"""
+    if not title: 
+        return ""
     
-    # 2. Remove content in brackets/parentheses (e.g., "(Official Video)", "(Lofi Flip)")
-    main_part = re.sub(r'\(.*?\)', '', main_part)
-    main_part = re.sub(r'\[.*?\]', '', main_part)
+    # Remove everything in brackets/parentheses
+    title = re.sub(r'\s*\(.*?\)\s*', ' ', title)
+    title = re.sub(r'\s*\[.*?\]\s*', ' ', title)
+    title = re.sub(r'\s*\{.*?\}\s*', ' ', title)
     
-    # 3. Clean up special chars and whitespace
-    main_part = re.sub(r'[^a-z0-9\s]', '', main_part.lower())
-    main_part = re.sub(r'\s+', ' ', main_part).strip()
+    # Remove common separators and everything after
+    for separator in [' - ', ' | ', ' ft. ', ' feat. ', ' from ', ' by ']:
+        title = title.split(separator)[0]
     
-    return main_part
+    # Remove numbers and special chars at the end
+    title = re.sub(r'\s+(official|video|audio|hd|4k|mp3).*$', '', title, flags=re.IGNORECASE)
+    
+    # Clean up
+    title = re.sub(r'[^a-z0-9\s]', '', title.lower())
+    title = re.sub(r'\s+', ' ', title).strip()
+    
+    return title
 
-def is_valid_autoplay_song(title: str, duration_sec: int) -> bool:
-    """Strict filter: No jukeboxes, no versions, correct duration."""
-    if not title: return False
+def is_valid_song(title: str, duration_sec: int) -> bool:
+    if not title or len(title) < 3:
+        return False
+    
     title_lower = title.lower()
     
-    # Check for bad keywords (Lofi, Jukebox, etc.)
+    # Reject bad keywords
     for bad in BAD_KEYWORDS:
         if bad in title_lower:
             return False
-            
-    # Duration check: 30s to 10 mins (Avoids 1-hour compilations)
-    if duration_sec < 30 or duration_sec > 600:
+    
+    # Duration: 2 mins to 8 mins
+    if duration_sec < 120 or duration_sec > 480:
         return False
-        
+    
     return True
 
-def autoplay_seed(track: dict) -> str:
-    title = (track or {}).get("title") or "music"
-    by = (track or {}).get("by") or ""
-    if by and by not in ["Autoplay", "Unknown"]:
-        return f"{title} {by}"
-    return title
-
 async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUTOPLAY_BATCH_SIZE) -> int:
-    if not seed_track or not await is_autoplay(seed_track.get("chat_id", chat_id)):
+    if not seed_track:
         return 0
+    
+    if not await is_autoplay(chat_id):
+        return 0
+        
     if _autoplay_fetching.get(chat_id):
+        LOGGER(__name__).info(f"[AutoPlay] Already fetching for chat {chat_id}")
         return 0
 
     _autoplay_fetching[chat_id] = True
@@ -78,146 +77,203 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     streamtype = seed_track.get("streamtype", "audio")
     seed_video_id = seed_track.get("vidid")
     
-    # Initialize history for this chat
-    history = PLAYED_HISTORY.setdefault(chat_id, {"vids": set(), "titles": set()})
+    # Initialize history
+    if chat_id not in PLAYED_HISTORY:
+        PLAYED_HISTORY[chat_id] = set()
     
-    # Add current seed track to history (Both ID and Base Title)
+    history = PLAYED_HISTORY[chat_id]
+    
+    # Add current song to history
     if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
-        history["vids"].add(seed_video_id)
-        history["titles"].add(get_base_title(seed_track.get("title")))
-        
-    seen = {item.get("vidid") for item in db.get(chat_id, [])}
-    if seed_video_id:
-        seen.add(seed_video_id)
+        history.add(seed_video_id)
+        seed_title = clean_title(seed_track.get("title", ""))
+        if seed_title:
+            history.add(f"TITLE:{seed_title}")
+    
+    # Get current queue
+    current_queue = db.get(chat_id, [])
+    queued_vids = {item.get("vidid") for item in current_queue if item.get("vidid")}
+    
+    LOGGER(__name__).info(f"[AutoPlay] Chat {chat_id}: Queue has {len(current_queue)} songs, History has {len(history)} items")
 
     try:
         candidates = []
         
-        # 1. Fetch ACTUAL related videos (Piped API)
+        # Method 1: Get related streams
         if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
             try:
+                LOGGER(__name__).info(f"[AutoPlay] Fetching related streams for {seed_video_id}")
                 related_list = await YouTube.get_related_streams(seed_video_id)
+                LOGGER(__name__).info(f"[AutoPlay] Got {len(related_list)} related streams")
+                
                 for rel in related_list:
                     rel_id = rel.get("id")
-                    rel_dur = rel.get("duration", 0)
                     rel_title = rel.get("title", "")
+                    rel_dur = rel.get("duration", 0)
                     
-                    # --- STRICT FILTERS ---
-                    if not rel_id or rel_id in seen or rel_id in history["vids"]:
-                        continue
-                    if not is_valid_autoplay_song(rel_title, rel_dur):
+                    if not rel_id:
                         continue
                     
-                    # --- DUPLICATE TITLE CHECK ---
-                    base_title = get_base_title(rel_title)
-                    if base_title in history["titles"]:
-                        continue # Rejects "Sanam Re Lofi" if "Sanam Re" is already played
-                        
-                    candidates.append(rel)
-            except Exception as exc:
-                LOGGER(__name__).warning(f"[AutoPlay] related lookup failed: {exc}")
+                    # Check if already played or queued
+                    if rel_id in history or rel_id in queued_vids:
+                        continue
+                    
+                    # Validate song
+                    if not is_valid_song(rel_title, rel_dur):
+                        continue
+                    
+                    # Check cleaned title
+                    base_title = clean_title(rel_title)
+                    if f"TITLE:{base_title}" in history:
+                        LOGGER(__name__).info(f"[AutoPlay] Skipping duplicate: {rel_title}")
+                        continue
+                    
+                    candidates.append({
+                        "id": rel_id,
+                        "title": rel_title,
+                        "duration": rel_dur,
+                        "source": "related"
+                    })
+                    
+            except Exception as e:
+                LOGGER(__name__).error(f"[AutoPlay] Related fetch error: {e}")
 
-        # 2. Fallback search (ONLY IF Piped failed or gave < 5 songs)
-        if len(candidates) < 5:
-            seed_query = autoplay_seed(seed_track)
-            # Search for just the song name, NO jukebox/mix
-            queries = [
-                f"{seed_query} song",
-                f"{seed_query} audio",
-                f"{seed_query} official video"
-            ]
-            for query in queries:
-                if len(candidates) >= limit * 2:
-                    break
-                try:
-                    result, vidid = await YouTube.track(query)
-                    if result and vidid and vidid not in seen and vidid not in history["vids"]:
-                        # Calculate duration in seconds from string (e.g., "4:30")
-                        dur_min_str = result.get("duration_min", "0:00")
-                        dur_sec = 0
-                        if dur_min_str:
-                            parts = str(dur_min_str).split(":")
-                            try:
-                                if len(parts) == 2: dur_sec = int(parts[0]) * 60 + int(parts[1])
-                                elif len(parts) == 3: dur_sec = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-                            except: dur_sec = 0
-                        
-                        # Apply strict filters
-                        if not is_valid_autoplay_song(result.get("title", ""), dur_sec):
-                            continue
-                        
-                        base_title = get_base_title(result.get("title", ""))
-                        if base_title in history["titles"]:
-                            continue
+        # Method 2: Search if not enough candidates
+        if len(candidates) < limit:
+            seed_query = seed_track.get("title", "")
+            if seed_query:
+                # Extract just the song name
+                clean_query = clean_title(seed_query)
+                if clean_query:
+                    search_queries = [
+                        f"arijit singh song",
+                        f"atif aslam song",
+                        f"shreya ghosal popular song",
+                        f"{clean_query} song",
+                        f"{clean_query} hindi song",
+                    ]
+                    
+                    for query in search_queries:
+                        if len(candidates) >= limit * 2:
+                            break
                             
-                        candidates.append({
-                            "id": vidid,
-                            "title": result.get("title"),
-                            "duration": dur_min_str,
-                            "duration_sec": dur_sec,
-                            "thumb": result.get("thumb")
-                        })
-                except Exception as exc:
-                    LOGGER(__name__).warning(f"[AutoPlay] search failed for {query}: {exc}")
+                        try:
+                            LOGGER(__name__).info(f"[AutoPlay] Searching: {query}")
+                            result, vidid = await YouTube.track(query)
+                            
+                            if result and vidid:
+                                if vidid not in history and vidid not in queued_vids:
+                                    dur_str = result.get("duration_min", "0:00")
+                                    dur_sec = 0
+                                    try:
+                                        parts = dur_str.split(":")
+                                        if len(parts) == 2:
+                                            dur_sec = int(parts[0]) * 60 + int(parts[1])
+                                    except:
+                                        pass
+                                    
+                                    if is_valid_song(result.get("title", ""), dur_sec):
+                                        base_title = clean_title(result.get("title", ""))
+                                        if f"TITLE:{base_title}" not in history:
+                                            candidates.append({
+                                                "id": vidid,
+                                                "title": result.get("title"),
+                                                "duration": dur_sec,
+                                                "source": "search"
+                                            })
+                        except Exception as e:
+                            LOGGER(__name__).error(f"[AutoPlay] Search error for {query}: {e}")
 
+        LOGGER(__name__).info(f"[AutoPlay] Total candidates found: {len(candidates)}")
+        
+        # Shuffle for variety
         random.shuffle(candidates)
 
+        # Add to queue
         for candidate in candidates:
             if added >= limit:
                 break
+                
             next_id = candidate.get("id")
+            next_title = candidate.get("title")
             
-            if not next_id or next_id in seen or next_id in history["vids"]:
+            if not next_id:
                 continue
             
+            # Double check
+            if next_id in history or next_id in queued_vids:
+                continue
+            
+            # Get full details
             try:
                 title, duration_min, duration_sec, _, next_vidid = await YouTube.details(next_id, videoid=True)
-            except Exception:
-                title = candidate.get("title") or "Autoplay Track"
-                duration_min = candidate.get("duration") or "0:00"
-                duration_sec = candidate.get("duration_sec", 0)
-                next_vidid = next_id
-
-            # FINAL VERIFICATION
-            if not next_vidid or next_vidid in seen or next_vidid in history["vids"]:
-                continue
-            if not is_valid_autoplay_song(title, duration_sec):
+                if not title:
+                    title = next_title
+                if not duration_min:
+                    duration_min = "0:00"
+            except Exception as e:
+                LOGGER(__name__).error(f"[AutoPlay] Details error for {next_id}: {e}")
                 continue
             
-            base_title = get_base_title(title)
-            if base_title in history["titles"]:
-                continue # Final check to prevent duplicates
-
+            # Final validation
+            if not next_vidid or not is_valid_song(title, duration_sec):
+                continue
+            
+            base_title = clean_title(title)
+            if f"TITLE:{base_title}" in history:
+                continue
+            
+            # Add to queue
             try:
                 await put_queue(
-                    chat_id, original_chat_id, f"vid_{next_vidid}",
-                    title or "Autoplay Track", duration_min or "0:00",
-                    "Autoplay", next_vidid, requester_id, streamtype,
+                    chat_id,
+                    original_chat_id,
+                    f"vid_{next_vidid}",
+                    title,
+                    duration_min,
+                    "Autoplay",
+                    next_vidid,
+                    requester_id,
+                    streamtype,
                 )
                 
-                # --- ADD TO HISTORY ---
-                seen.add(next_vidid)
-                history["vids"].add(next_vidid)
-                history["titles"].add(base_title) # Crucial: Saves cleaned title
+                # Update history
+                history.add(next_vidid)
+                history.add(f"TITLE:{base_title}")
+                queued_vids.add(next_vidid)
                 added += 1
+                
+                LOGGER(__name__).info(f"[AutoPlay] Added: {title[:50]}")
+                
             except Exception as e:
-                LOGGER(__name__).error(f"[AutoPlay] Failed to add {next_id} to queue: {e}")
+                LOGGER(__name__).error(f"[AutoPlay] Queue error: {e}")
                 continue
 
         if added > 0:
+            msg = f"<b>♬ Autoplay added {added} fresh song(s) to queue.</b>\n"
+            msg += f"<i>Total played: {len(history)//2} | Queue: {len(queued_vids)}</i>"
             try:
-                await app.send_message(
-                    original_chat_id,
-                    f"<b>♬ Autoplay added {added} fresh song(s) to queue.</b>"
-                )
+                await app.send_message(original_chat_id, msg)
             except Exception:
                 pass
         
+        LOGGER(__name__).info(f"[AutoPlay] Chat {chat_id}: Added {added} songs")
         return added
+        
+    except Exception as e:
+        LOGGER(__name__).error(f"[AutoPlay] Critical error: {e}")
+        return 0
     finally:
         _autoplay_fetching[chat_id] = False
 
 async def maybe_refetch_autoplay(chat_id: int, seed_track: dict):
+    if not seed_track:
+        return
+        
     current_queue = len(db.get(chat_id, []))
+    
+    LOGGER(__name__).info(f"[AutoPlay] Check - Chat {chat_id}: Queue size = {current_queue}, Threshold = {AUTOPLAY_REFETCH_THRESHOLD}")
+    
     if current_queue <= AUTOPLAY_REFETCH_THRESHOLD:
+        LOGGER(__name__).info(f"[AutoPlay] Triggering fetch for chat {chat_id}")
         asyncio.create_task(queue_autoplay_tracks(chat_id, seed_track))
