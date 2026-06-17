@@ -1,5 +1,4 @@
 import asyncio
-
 import config
 from AxiomMusic import LOGGER, YouTube, app
 from AxiomMusic.misc import db
@@ -10,14 +9,12 @@ AUTOPLAY_BATCH_SIZE = 3
 AUTOPLAY_REFETCH_THRESHOLD = 1
 _autoplay_fetching = {}
 
-
 def autoplay_seed(track: dict) -> str:
     title = (track or {}).get("title") or "music"
     by = (track or {}).get("by") or ""
     if by and by not in ["Autoplay", "Unknown"]:
         return f"{title} {by}"
     return title
-
 
 async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUTOPLAY_BATCH_SIZE) -> int:
     if not seed_track or not await is_autoplay(seed_track.get("chat_id", chat_id)):
@@ -59,14 +56,18 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             except Exception as exc:
                 LOGGER(__name__).warning(f"[AutoPlay] search failed for {query}: {exc}")
                 continue
-            if vidid:
-                candidates.append(
-                    {
-                        "id": vidid,
-                        "title": result.get("title"),
-                        "duration": result.get("duration_min"),
-                    }
-                )
+            
+            # --- FIX: Check if result is not None before using it ---
+            if not result or not vidid:
+                continue
+
+            candidates.append(
+                {
+                    "id": vidid,
+                    "title": result.get("title"),
+                    "duration": result.get("duration_min"),
+                }
+            )
 
         seen = {item.get("vidid") for item in db.get(chat_id, [])}
         if seed_video_id:
@@ -97,8 +98,8 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 chat_id,
                 original_chat_id,
                 f"vid_{next_vidid}",
-                title,
-                duration_min,
+                title or "Autoplay Track", # --- FIX: Fallback title ---
+                duration_min or "0:00",     # --- FIX: Fallback duration ---
                 "Autoplay",
                 next_vidid,
                 requester_id,
@@ -118,7 +119,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
         return added
     finally:
         _autoplay_fetching[chat_id] = False
-
 
 async def maybe_refetch_autoplay(chat_id: int, seed_track: dict):
     if len(db.get(chat_id, [])) <= AUTOPLAY_REFETCH_THRESHOLD:
