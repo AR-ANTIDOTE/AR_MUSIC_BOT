@@ -6,12 +6,13 @@ from AxiomMusic.misc import db
 from AxiomMusic.utils.database import is_autoplay
 from AxiomMusic.utils.stream.queue import put_queue
 
-AUTOPLAY_BATCH_SIZE = 5
-AUTOPLAY_REFETCH_THRESHOLD = 2
+# --- UNLIMITED AUTOPLAY SETTINGS ---
+AUTOPLAY_BATCH_SIZE = 15  # Fetch 15 songs at once
+AUTOPLAY_REFETCH_THRESHOLD = 3  # Fetch new songs when only 3 left in queue
 _autoplay_fetching = {}
 
-# --- NEW: HISTORY TRACKER TO PREVENT REPEATS ---
-PLAYED_HISTORY = {} # Format: {chat_id: set(vidid1, vidid2...)}
+# --- HISTORY TRACKER (Prevents repeats forever) ---
+PLAYED_HISTORY = {}  # Format: {chat_id: set(vidid1, vidid2...)}
 
 def autoplay_seed(track: dict) -> str:
     title = (track or {}).get("title") or "music"
@@ -36,7 +37,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     # Initialize history for this chat
     history = PLAYED_HISTORY.setdefault(chat_id, set())
     if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
-        history.add(seed_video_id) # Add current song to history
+        history.add(seed_video_id)
         
     seen = {item.get("vidid") for item in db.get(chat_id, [])}
     if seed_video_id:
@@ -45,7 +46,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     try:
         candidates = []
         
-        # 1. Fetch ACTUAL related videos using Piped API (Super fast & reliable)
+        # 1. Fetch ACTUAL related videos (15+ songs from Piped API)
         if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
             try:
                 related_list = await YouTube.get_related_streams(seed_video_id)
@@ -55,30 +56,39 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             except Exception as exc:
                 LOGGER(__name__).warning(f"[AutoPlay] related lookup failed: {exc}")
 
-        # 2. Fallback text search if related list is empty
+        # 2. If not enough related songs, search for more
         if len(candidates) < limit:
             seed_query = autoplay_seed(seed_track)
-            queries = [f"{seed_query} non stop mix", f"{seed_query} jukebox"]
+            queries = [
+                f"{seed_query} non stop mix",
+                f"{seed_query} jukebox",
+                f"{seed_query} full album",
+                f"{seed_query} playlist"
+            ]
             for query in queries:
-                if len(candidates) >= limit * 2: break
+                if len(candidates) >= limit * 2:
+                    break
                 try:
                     result, vidid = await YouTube.track(query)
                     if result and vidid and vidid not in seen and vidid not in history:
                         candidates.append({
-                            "id": vidid, "title": result.get("title"),
-                            "duration": result.get("duration_min"), "thumb": result.get("thumb")
+                            "id": vidid,
+                            "title": result.get("title"),
+                            "duration": result.get("duration_min"),
+                            "thumb": result.get("thumb")
                         })
                 except Exception as exc:
                     LOGGER(__name__).warning(f"[AutoPlay] search failed for {query}: {exc}")
 
-        # --- NEW: Shuffle candidates so it doesn't pick the same first song every time ---
+        # Shuffle to get random songs every time
         random.shuffle(candidates)
 
         for candidate in candidates:
-            if added >= limit: break
+            if added >= limit:
+                break
             next_id = candidate.get("id")
             
-            # Double check to ensure NO REPEATS
+            # Ensure NO REPEATS
             if not next_id or next_id in seen or next_id in history:
                 continue
             
@@ -96,23 +106,35 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 continue
 
             await put_queue(
-                chat_id, original_chat_id, f"vid_{next_vidid}",
-                title or "Autoplay Track", duration_min or "0:00",
-                "Autoplay", next_vidid, requester_id, streamtype,
+                chat_id,
+                original_chat_id,
+                f"vid_{next_vidid}",
+                title or "Autoplay Track",
+                duration_min or "0:00",
+                "Autoplay",
+                next_vidid,
+                requester_id,
+                streamtype,
             )
             
             seen.add(next_vidid)
-            history.add(next_vidid) # --- CRITICAL: Add to history so it NEVER repeats ---
+            history.add(next_vidid)  # Add to history - NEVER repeats
             added += 1
 
         if added:
             try:
-                await app.send_message(original_chat_id, f"<b>♬ Autoplay added {added} fresh song(s) to queue.</b>")
-            except Exception: pass
+                await app.send_message(
+                    original_chat_id,
+                    f"<b>♬ Autoplay added {added} more songs to queue. Total played: {len(history)}</b>"
+                )
+            except Exception:
+                pass
         return added
     finally:
         _autoplay_fetching[chat_id] = False
 
 async def maybe_refetch_autoplay(chat_id: int, seed_track: dict):
-    if len(db.get(chat_id, [])) <= AUTOPLAY_REFETCH_THRESHOLD:
+    # Keep fetching as long as queue is low - this makes it UNLIMITED
+    current_queue = len(db.get(chat_id, []))
+    if current_queue <= AUTOPLAY_REFETCH_THRESHOLD:
         asyncio.create_task(queue_autoplay_tracks(chat_id, seed_track))
