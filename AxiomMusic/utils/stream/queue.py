@@ -37,10 +37,12 @@ async def put_queue(
         duration_in_seconds = time_to_seconds(duration) - 3
     except:
         duration_in_seconds = 0
-    # FIX user name properly
+        
+    # FIX user name properly (Bug Fixed: member ko fetch kiya)
     if not user or str(user).strip().lower() in ["", "none", "null", "-"]:
         try:
             from AxiomMusic import app
+            member = await app.get_users(user_id)  # <-- Ye line add ki thi jo missing thi
             user = " ".join(
                 filter(None, [member.first_name, member.last_name])
             ).strip() or "Unknown"
@@ -70,6 +72,26 @@ async def put_queue(
         db[chat_id].append(put)
     autoclean.append(file)
 
+    # --- AUTOPLAY TRIGGER (Added to fetch songs automatically) ---
+    try:
+        from AxiomMusic.utils.database import is_autoplay
+        from AxiomMusic.utils.stream.autoplay import maybe_refetch_autoplay
+        
+        if await is_autoplay(chat_id):
+            asyncio.create_task(maybe_refetch_autoplay(
+                chat_id, 
+                {
+                    "chat_id": chat_id, 
+                    "user_id": user_id, 
+                    "streamtype": stream, 
+                    "vidid": vidid, 
+                    "title": title, 
+                    "by": user
+                }
+            ))
+    except Exception:
+        pass
+
 
 async def put_queue_index(
     chat_id,
@@ -94,6 +116,7 @@ async def put_queue_index(
             dur = 0
     else:
         dur = 0
+        
     # FIX user name properly
     if not user or str(user).strip().lower() in ["", "none", "null", "-"]:
         try:
@@ -124,3 +147,23 @@ async def put_queue_index(
             db[chat_id].append(put)
     else:
         db[chat_id].append(put)
+
+    # --- AUTOPLAY TRIGGER for Index streams too ---
+    try:
+        from AxiomMusic.utils.database import is_autoplay
+        from AxiomMusic.utils.stream.autoplay import maybe_refetch_autoplay
+        
+        if await is_autoplay(chat_id):
+            asyncio.create_task(maybe_refetch_autoplay(
+                chat_id, 
+                {
+                    "chat_id": chat_id, 
+                    "user_id": user_id, 
+                    "streamtype": stream, 
+                    "vidid": vidid, 
+                    "title": title, 
+                    "by": user
+                }
+            ))
+    except Exception:
+        pass
