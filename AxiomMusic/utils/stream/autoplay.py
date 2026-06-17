@@ -8,7 +8,7 @@ from AxiomMusic.utils.database import is_autoplay
 from AxiomMusic.utils.stream.queue import put_queue
 
 AUTOPLAY_BATCH_SIZE = 100
-AUTOPLAY_REFETCH_THRESHOLD = 50
+AUTOPLAY_REFETCH_THRESHOLD = 5
 _autoplay_fetching = {}
 PLAYED_HISTORY = {}
 
