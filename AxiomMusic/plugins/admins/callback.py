@@ -16,7 +16,7 @@ import asyncio
 import re
 
 from pyrogram import errors, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery  # <-- CallbackQuery import kiya
 
 from AxiomMusic import YouTube, app
 from AxiomMusic.core.call import Axiomm
@@ -76,7 +76,8 @@ async def _do_skip_or_replay(CallbackQuery_or_message, chat_id, _, is_replay=Fal
     Works with both callback queries and messages.
     """
     check = db.get(chat_id)
-    is_cb = hasattr(CallbackQuery_or_message, "answer")  # True = CallbackQuery
+    # --- FIX: YAHAN BUG THA, AB YE 100% CORRECT CHECK KAREGA ---
+    is_cb = isinstance(CallbackQuery_or_message, CallbackQuery)  # True = CallbackQuery
     mention = CallbackQuery_or_message.from_user.mention
 
     if is_replay:
