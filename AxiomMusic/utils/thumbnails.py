@@ -502,7 +502,7 @@ async def get_thumb(videoid: str, user_name: str = "AxiomUser") -> str:
     f_req_label = _get_font(FONT_BOLD, 30)     # "Requested by:"
     f_req = _get_font(FONT_BOLD, 30)   # username
 
-    label_text = "Requested by: "
+    label_text = "Requested by | "
     name_text  = safe_name
 
     # width calculate (same font)
@@ -532,7 +532,7 @@ async def get_thumb(videoid: str, user_name: str = "AxiomUser") -> str:
         fill=c_base,
         anchor="lm"
     )
-    draw.text((1255, 45), "Dev :- Maanav",                                          font=f_wm,  fill=TEXT_WHITE, anchor="rd")
+    draw.text((1255, 45), "Dev | Maanav",                                          font=f_wm,  fill=TEXT_WHITE, anchor="rd")
 
     base.save(output, "PNG", optimize=True)
 
