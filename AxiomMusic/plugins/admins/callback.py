@@ -238,7 +238,7 @@ async def _do_skip_or_replay(CallbackQuery_or_message, chat_id, _, is_replay=Fal
             photo = SOUNCLOUD_IMG_URL if str(streamtype) == "audio" else TELEGRAM_VIDEO_URL
             caption = _["stream_1"].format(SUPPORT_CHAT, title[:23], duration, user)
         else:
-            img = await get_thumb(videoid, user)
+            photo = await get_thumb(videoid, user)
             caption = _["stream_1"].format(
                 f"https://t.me/{app.username}?start=info_{videoid}",
                 title[:23],
