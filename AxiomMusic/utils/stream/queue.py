@@ -72,6 +72,24 @@ async def put_queue(
         db[chat_id].append(put)
     autoclean.append(file)
 
+        # AUTOPLAY TRIGGER
+    try:
+        if await is_autoplay(chat_id):
+            from AxiomMusic.utils.stream.autoplay import maybe_refetch_autoplay
+            asyncio.create_task(maybe_refetch_autoplay(
+                chat_id,
+                {
+                    "chat_id": original_chat_id,
+                    "user_id": user_id,
+                    "streamtype": stream,
+                    "vidid": vidid,
+                    "title": title,
+                    "by": user
+                }
+            ))
+    except Exception as e:
+        pass
+        
     # --- AUTOPLAY TRIGGER (Added to fetch songs automatically) ---
     try:
         from AxiomMusic.utils.database import is_autoplay
