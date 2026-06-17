@@ -259,7 +259,7 @@ def _truncate(draw, text, font, max_w):
     return text + "…"
 
 
-async def get_thumb(videoid: str, user_name: str = "Unknown") -> str:
+async def get_thumb(videoid: str, user_name: str = "AxiomUser") -> str:
     output = f"cache/{videoid}.png"
     cache  = f"cache/thumb{videoid}.jpg"
     os.makedirs("cache", exist_ok=True)
