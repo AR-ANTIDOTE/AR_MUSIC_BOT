@@ -520,7 +520,7 @@ async def get_thumb(videoid: str, user_name: str = "AxiomUser") -> str:
         (start_x, y),
         label_text,
         font=f_req,
-        fill=c_base,
+        fill=TEXT_WHITE,
         anchor="lm"
     )
 
@@ -529,7 +529,7 @@ async def get_thumb(videoid: str, user_name: str = "AxiomUser") -> str:
         (start_x + label_w, y),
         name_text,
         font=f_req,
-        fill=NAME_COLOR,
+        fill=c_base,
         anchor="lm"
     )
     draw.text((1255, 45), "Dev :- Maanav",                                          font=f_wm,  fill=TEXT_WHITE, anchor="rd")
