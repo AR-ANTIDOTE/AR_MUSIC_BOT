@@ -121,7 +121,7 @@ async def stream(
                     "video" if video else "audio",
                     forceplay=forceplay,
                 )
-                img = await get_thumb(vidid)
+                img = await get_thumb(vidid, user_name=user_name if user_name else "AxiomUser")
                 button = stream_markup(_, chat_id)
                 
                 # Check thumbnail status
@@ -196,7 +196,7 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            img = await get_thumb(vidid)
+            img = await get_thumb(vidid, user_name=user_name if user_name else "AxiomUser")
             position = len(db.get(chat_id)) - 1
             button = aq_markup(_, chat_id)
             
@@ -242,7 +242,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = await get_thumb(vidid)
+            img = await get_thumb(vidid, user_name=user_name if user_name else "AxiomUser")
             button = stream_markup(_, chat_id)
             
             # Check thumbnail status
@@ -451,7 +451,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = await get_thumb(vidid)
+            img = await get_thumb(vidid, user_name=user_name if user_name else "AxiomUser")
             button = stream_markup2(_, chat_id)
             
             # Check thumbnail status
