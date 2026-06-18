@@ -1,6 +1,6 @@
 import re
 from pyrogram import filters
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from AxiomMusic import app
@@ -23,27 +23,27 @@ ON_STATES = {"on", "enable", "enabled"}
 OFF_STATES = {"off", "disable", "disabled"}
 
 LANGUAGES = {
-    "auto": "🔄 Auto Detect",
-    "hindi": "🇮🇳 Hindi",
-    "english": "🇬🇧 English",
-    "punjabi": "🎵 Punjabi",
-    "tamil": "🎬 Tamil",
-    "telugu": "🎭 Telugu",
-    "kannada": "🎶 Kannada",
-    "malayalam": "🎤 Malayalam",
-    "bengali": "🎼 Bengali",
-    "marathi": "🎹 Marathi",
-    "gujarati": "🎺 Gujarati"
+    "auto": "Auto Detect",
+    "hindi": "Hindi",
+    "english": "English",
+    "punjabi": "Punjabi",
+    "tamil": "Tamil",
+    "telugu": "Telugu",
+    "kannada": "Kannada",
+    "malayalam": "Malayalam",
+    "bengali": "Bengali",
+    "marathi": "Marathi",
+    "gujarati": "Gujarati"
 }
 
 MOODS = {
-    "any": "🎲 Any Mood",
-    "happy": "😊 Happy",
-    "sad": "😢 Sad",
-    "romantic": "❤️ Romantic",
-    "workout": "💪 Workout",
-    "chill": "😌 Chill",
-    "bhajan": "🙏 Bhajan/Devotional"
+    "any": "Any Mood",
+    "happy": "Happy",
+    "sad": "Sad",
+    "romantic": "Romantic",
+    "workout": "Workout",
+    "chill": "Chill",
+    "bhajan": "Bhajan / Devotional"
 }
 
 def parse_autoplay_state(message: Message):
@@ -75,57 +75,55 @@ async def can_toggle_autoplay(chat_id: int, user_id: int) -> bool:
 
 def autoplay_markup(status: bool):
     if status:
-        button_text = "✅ ᴇɴᴀʙʟᴇᴅ"
+        button_text = "ENABLED ✅"
         toggle_state = "off"
     else:
-        button_text = "❌ ᴅɪsᴀʙʟᴇᴅ"
+        button_text = "DISABLED ❌"
         toggle_state = "on"
 
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}")],
-        [InlineKeyboardButton("🌐 Language", callback_data="autoplay_lang")],
-        [InlineKeyboardButton("🎭 Mood", callback_data="autoplay_mood")]
+        [InlineKeyboardButton("Language", callback_data="autoplay_lang")],
+        [InlineKeyboardButton("Mood", callback_data="autoplay_mood")]
     ])
 
 def language_markup(current_lang: str):
     buttons = []
     row = []
     for lang_code, lang_name in LANGUAGES.items():
-        if lang_code == current_lang:
-            lang_name = f"✅ {lang_name}"
-        row.append(InlineKeyboardButton(lang_name, callback_data=f"autoplay_setlang|{lang_code}"))
+        display_name = f"✅ {lang_name}" if lang_code == current_lang else lang_name
+        row.append(InlineKeyboardButton(display_name, callback_data=f"autoplay_setlang|{lang_code}"))
         if len(row) == 2:
             buttons.append(row)
             row = []
     if row:
         buttons.append(row)
-    buttons.append([InlineKeyboardButton("🔙 Back", callback_data="autoplay_back")])
+    buttons.append([InlineKeyboardButton("Back", callback_data="autoplay_back")])
     return InlineKeyboardMarkup(buttons)
 
 def mood_markup(current_mood: str):
     buttons = []
     row = []
     for mood_code, mood_name in MOODS.items():
-        if mood_code == current_mood:
-            mood_name = f"✅ {mood_name}"
-        row.append(InlineKeyboardButton(mood_name, callback_data=f"autoplay_setmood|{mood_code}"))
+        display_name = f"✅ {mood_name}" if mood_code == current_mood else mood_name
+        row.append(InlineKeyboardButton(display_name, callback_data=f"autoplay_setmood|{mood_code}"))
         if len(row) == 2:
             buttons.append(row)
             row = []
     if row:
         buttons.append(row)
-    buttons.append([InlineKeyboardButton("🔙 Back", callback_data="autoplay_back")])
+    buttons.append([InlineKeyboardButton("Back", callback_data="autoplay_back")])
     return InlineKeyboardMarkup(buttons)
 
 def autoplay_text(status: bool, lang: str, mood: str):
-    current = "ᴇɴᴀʙʟᴇᴅ ✅" if status else "ᴅɪsᴀʙʟᴇᴅ ❌"
-    lang_name = LANGUAGES.get(lang, "🔄 Auto Detect")
-    mood_name = MOODS.get(mood, "🎲 Any Mood")
+    current = "ENABLED ✅" if status else "DISABLED ❌"
+    lang_name = LANGUAGES.get(lang, "Auto Detect")
+    mood_name = MOODS.get(mood, "Any Mood")
     return (
-        "<b>♬ ᴀᴜᴛᴏᴘʟᴀʏ sᴇᴛᴛɪɴɢs</b>\n\n"
-        f"<b>ѕтαтυѕ:</b> {current}\n"
-        f"<b>ℓαиgυαgє:</b> {lang_name}\n"
-        f"<b>мσσ∂:</b> {mood_name}\n\n"
+        "<b> AUTOPLAY SETTINGS</b>\n\n"
+        f"<b>Status:</b> {current}\n"
+        f"<b>Language:</b> {lang_name}\n"
+        f"<b>Mood:</b> {mood_name}\n\n"
         "<b>Commands:</b> <code>/autoplay on</code> | <code>/autoplay off</code>"
     )
 
@@ -133,14 +131,14 @@ def autoplay_text(status: bool, lang: str, mood: str):
 @AdminActual
 async def autoplay_command(_, message: Message, __):
     if not message.from_user:
-        return await message.reply_text("<b>Please use this command from a user account.</b>")
+        return await message.reply_text("Please use this command from a user account.")
 
     chat_id = message.chat.id
     requested_state = parse_autoplay_state(message)
 
     if requested_state in ON_STATES | OFF_STATES:
         if not await can_toggle_autoplay(chat_id, message.from_user.id):
-            return await message.reply_text("<b>Only admins can change autoplay mode.</b>")
+            return await message.reply_text("Only admins can change autoplay mode.")
         status = requested_state in ON_STATES
         if status:
             await autoplay_on(chat_id)
@@ -170,11 +168,11 @@ async def autoplay_callback(_, callback_query: CallbackQuery, __):
     if state == "on":
         await autoplay_on(chat_id)
         status = True
-        alert = "Autoplay enabled ✅"
+        alert = "Autoplay enabled successfully."
     else:
         await autoplay_off(chat_id)
         status = False
-        alert = "Autoplay disabled ❌"
+        alert = "Autoplay disabled successfully."
 
     await callback_query.answer(alert, show_alert=True)
     
@@ -194,7 +192,7 @@ async def autoplay_lang_menu(_, callback_query: CallbackQuery, __):
     current_lang = await get_autoplay_lang(chat_id)
     
     await callback_query.edit_message_text(
-        "<b>🌐 Select Autoplay Language</b>\n\nChoose the language for autoplay songs:",
+        "<b>Select Autoplay Language</b>\n\nChoose the language for autoplay songs:",
         reply_markup=language_markup(current_lang),
         disable_web_page_preview=True,
     )
@@ -224,7 +222,7 @@ async def autoplay_mood_menu(_, callback_query: CallbackQuery, __):
     current_mood = await get_autoplay_mood(chat_id)
     
     await callback_query.edit_message_text(
-        "<b>🎭 Select Autoplay Mood</b>\n\nChoose the mood for autoplay songs:",
+        "<b>Select Autoplay Mood</b>\n\nChoose the mood for autoplay songs:",
         reply_markup=mood_markup(current_mood),
         disable_web_page_preview=True,
     )
