@@ -144,11 +144,11 @@ def stream_markup_timer(_, chat_id, played, dur):
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style),
             InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_inline_config|{chat_id}", style=autoplay_style),
         ],
-        [
-            # InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
-            # InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
-            # InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
-        ]
+        # [
+        #     # InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
+        #     # InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
+        #     # InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
+        # ]
     ]
     return buttons
 
