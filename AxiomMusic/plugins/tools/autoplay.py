@@ -189,3 +189,18 @@ async def autoplay_back(_, callback_query: CallbackQuery, __):
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
     await callback_query.edit_message_text(autoplay_text(status, lang, mood), reply_markup=autoplay_markup(status), disable_web_page_preview=True)
+
+@app.on_callback_query(filters.regex(r"^autoplay_inline_config\|(.+)$") & ~BANNED_USERS)
+@ActualAdminCB
+async def autoplay_inline_config(_, callback_query: CallbackQuery, __):
+    chat_id = int(callback_query.data.split("|", 1)[1])
+    status = await is_autoplay(chat_id)
+    lang = await get_autoplay_lang(chat_id)
+    mood = await get_autoplay_mood(chat_id)
+    
+    await callback_query.answer()
+    await callback_query.edit_message_text(
+        autoplay_text(status, lang, mood),
+        reply_markup=autoplay_markup(status),
+        disable_web_page_preview=True,
+    )
