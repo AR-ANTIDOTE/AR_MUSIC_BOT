@@ -554,6 +554,8 @@ def duration_to_seconds(duration):
 # ==========================================
 # Replace the entire queue_autoplay_tracks function in AxiomMusic/utils/stream/autoplay.py
 
+# Replace the entire queue_autoplay_tracks function
+
 async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUTOPLAY_BATCH_SIZE) -> int:
     if not seed_track or not await is_autoplay(chat_id): return 0
     if _autoplay_fetching.get(chat_id): return 0
@@ -568,10 +570,8 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
-    if lang == "auto": lang = "hindi"
-    if mood == "any": mood = "romantic"
     
-    LOGGER(__name__).info(f"[AutoPlay] Lang: {lang}, Mood: {mood}")
+    LOGGER(__name__).info(f"[AutoPlay] Starting - Lang: {lang}, Mood: {mood}")
     
     if chat_id not in PLAYED_HISTORY: PLAYED_HISTORY[chat_id] = []
     history = PLAYED_HISTORY[chat_id]
@@ -583,107 +583,106 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
 
     try:
         candidates = []
-        channels = GLOBAL_MUSIC_DATABASE.get(lang, {}).get(mood, [])
         
-        # Fallback to "any" mood if specific mood has no channels
-        if not channels:
-            channels = []
-            for mood_list in GLOBAL_MUSIC_DATABASE.get(lang, {}).values():
-                channels.extend(mood_list)
-            LOGGER(__name__).info(f"[AutoPlay] No channels for {lang}/{mood}, using 'any' mood")
+        # Try multiple fallback strategies
+        strategies = [
+            (lang, mood),
+            (lang, "any"),
+            (lang, "romantic"),
+            ("hindi", mood),
+            ("hindi", "any"),
+            ("english", "any"),
+        ]
         
-        # Fallback to Hindi if language has no channels
-        if not channels:
-            channels = GLOBAL_MUSIC_DATABASE.get("hindi", {}).get("any", [])
-            LOGGER(__name__).info(f"[AutoPlay] No channels for {lang}, using Hindi")
-        
-        LOGGER(__name__).info(f"[AutoPlay] Using {len(channels)} channels: {channels[:3]}")
-        
-        for channel_name in channels:
-            if len(candidates) >= limit * 2: break
+        for try_lang, try_mood in strategies:
+            if len(candidates) >= limit * 2:
+                break
+                
+            channels = GLOBAL_MUSIC_DATABASE.get(try_lang, {}).get(try_mood, [])
+            if not channels:
+                continue
             
-            channel_key = f"{chat_id}_{channel_name}"
-            start_index = CHANNEL_INDEX.get(channel_key, 0)
+            LOGGER(__name__).info(f"[AutoPlay] Trying strategy: {try_lang}/{try_mood} - {len(channels)} channels")
             
-            videos = await fetch_channel_videos(channel_name, max_results=30)
-            LOGGER(__name__).info(f"[AutoPlay] Channel {channel_name}: Got {len(videos)} videos")
-            
-            filtered_videos = filter_by_mood(videos, mood)
-            filtered_videos = filter_by_language(filtered_videos, lang)
-            LOGGER(__name__).info(f"[AutoPlay] After filter: {len(filtered_videos)} videos")
-            
-            # Add videos starting from index
-            for i, video in enumerate(filtered_videos[start_index:], start=start_index):
+            for channel_name in channels:
                 if len(candidates) >= limit * 2: break
                 
-                vid_id = video.get("id")
-                vid_title = video.get("title")
-                vid_duration = duration_to_seconds(video.get("duration"))
-                
-                if not vid_id:
-                    LOGGER(__name__).warning(f"[AutoPlay] No video ID found")
+                videos = await fetch_channel_videos(channel_name, max_results=20)
+                if not videos:
                     continue
                 
-                if vid_id in queued_vids:
-                    LOGGER(__name__).info(f"[AutoPlay] Already queued: {vid_id}")
-                    continue
+                # Less strict filtering - just check language
+                filtered = filter_by_language(videos, try_lang)
                 
-                is_duplicate = False
-                for played in history:
-                    if played.get("vidid") == vid_id:
-                        is_duplicate = True
-                        LOGGER(__name__).info(f"[AutoPlay] Duplicate vidid: {vid_id}")
-                        break
-                    if is_same_song(played.get("title", ""), vid_title):
-                        is_duplicate = True
-                        LOGGER(__name__).info(f"[AutoPlay] Duplicate song: {vid_title[:30]}")
-                        break
-                
-                if is_duplicate:
-                    continue
-                
-                # Check if bad song (skip duration check for now)
-                if is_bad_song(vid_title, vid_duration if vid_duration else 180):
-                    LOGGER(__name__).info(f"[AutoPlay] Bad song: {vid_title[:30]}")
-                    continue
-                
-                candidates.append({
-                    "id": vid_id,
-                    "title": vid_title,
-                    "duration": vid_duration
-                })
-                LOGGER(__name__).info(f"[AutoPlay] ✓ Candidate added: {vid_title[:50]}")
-            
-            CHANNEL_INDEX[channel_key] = start_index + len(filtered_videos)
-        
-        LOGGER(__name__).info(f"[AutoPlay] Total candidates before shuffle: {len(candidates)}")
-        
-        # Fallback: Search if not enough
-        if len(candidates) < 3:
-            LOGGER(__name__).info(f"[AutoPlay] Fallback to search (only {len(candidates)} candidates)")
-            search_query = f"{lang} {mood} songs"
-            try:
-                result, vidid = await YouTube.track(search_query)
-                if result and vidid and vidid not in queued_vids:
+                for video in filtered:
+                    if len(candidates) >= limit * 2: break
+                    
+                    vid_id = video.get("id")
+                    vid_title = video.get("title")
+                    
+                    if not vid_id or vid_id in queued_vids:
+                        continue
+                    
+                    # Check history
                     is_dup = False
                     for played in history:
-                        if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
+                        if played.get("vidid") == vid_id:
                             is_dup = True
                             break
-                    if not is_dup and not is_bad_song(result.get("title", ""), 180):
+                        if is_same_song(played.get("title", ""), vid_title):
+                            is_dup = True
+                            break
+                    
+                    if not is_dup:
                         candidates.append({
-                            "id": vidid,
-                            "title": result.get("title"),
-                            "duration": 180
+                            "id": vid_id,
+                            "title": vid_title,
+                            "duration": 180  # Default duration
                         })
-                        LOGGER(__name__).info(f"[AutoPlay] Fallback candidate: {result.get('title', '')[:50]}")
-            except Exception as e:
-                LOGGER(__name__).error(f"[AutoPlay] Search error: {e}")
+                        LOGGER(__name__).info(f"[AutoPlay] Candidate: {vid_title[:40]}")
+        
+        LOGGER(__name__).info(f"[AutoPlay] Total candidates from channels: {len(candidates)}")
+        
+        # Fallback: Direct YouTube search
+        if len(candidates) < 3:
+            LOGGER(__name__).info(f"[AutoPlay] Using YouTube search fallback")
+            search_queries = [
+                f"{lang} {mood} songs 2024",
+                f"{lang} {mood} hits",
+                f"latest {lang} songs",
+                f"{mood} songs {lang}",
+            ]
+            
+            for query in search_queries:
+                if len(candidates) >= limit * 2:
+                    break
+                try:
+                    LOGGER(__name__).info(f"[AutoPlay] Searching: {query}")
+                    result, vidid = await YouTube.track(query)
+                    if result and vidid:
+                        if vidid not in queued_vids:
+                            is_dup = False
+                            for played in history:
+                                if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
+                                    is_dup = True
+                                    break
+                            
+                            if not is_dup:
+                                candidates.append({
+                                    "id": vidid,
+                                    "title": result.get("title"),
+                                    "duration": 180
+                                })
+                                LOGGER(__name__).info(f"[AutoPlay] Search result: {result.get('title', '')[:40]}")
+                except Exception as e:
+                    LOGGER(__name__).error(f"[AutoPlay] Search error for '{query}': {e}")
+                    continue
         
         if not candidates:
-            LOGGER(__name__).error("[AutoPlay] NO CANDIDATES FOUND AT ALL!")
+            LOGGER(__name__).error("[AutoPlay] CRITICAL: No candidates found at all!")
             return 0
         
+        LOGGER(__name__).info(f"[AutoPlay] Final candidates: {len(candidates)}")
         random.shuffle(candidates)
 
         # Add to queue
@@ -696,25 +695,13 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             try:
                 title, duration_min, duration_sec, _, next_vidid = await YouTube.details(next_id, videoid=True)
                 if not title: title = candidate.get("title", "Unknown")
-                if not duration_min: duration_min = "0:00"
+                if not duration_min or duration_min == "0:00": duration_min = "3:00"
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Details error: {e}")
                 title = candidate.get("title", "Unknown")
-                duration_min = "0:00"
-                duration_sec = candidate.get("duration", 180)
+                duration_min = "3:00"
+                duration_sec = 180
                 next_vidid = next_id
-            
-            if is_bad_song(title, duration_sec if duration_sec else 180):
-                LOGGER(__name__).info(f"[AutoPlay] Final bad song check failed: {title[:30]}")
-                continue
-            
-            is_dup = False
-            for played in history:
-                if is_same_song(played.get("title", ""), title):
-                    is_dup = True
-                    break
-            if is_dup:
-                continue
             
             try:
                 await put_queue(
@@ -725,14 +712,17 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 history.append({"vidid": next_vidid, "title": title})
                 queued_vids.add(next_vidid)
                 added += 1
-                LOGGER(__name__).info(f"[AutoPlay] ✓✓✓ ADDED TO QUEUE: {title[:50]}")
+                LOGGER(__name__).info(f"[AutoPlay] ✓✓✓ ADDED: {title[:50]}")
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Queue error: {e}")
+                import traceback
+                traceback.print_exc()
 
-        LOGGER(__name__).info(f"[AutoPlay] ✓✓✓ TOTAL ADDED: {added}")
+        LOGGER(__name__).info(f"[AutoPlay] ✓✓✓ SUCCESS: Added {added} songs to queue")
         return added
+        
     except Exception as e:
-        LOGGER(__name__).error(f"[AutoPlay] Critical: {e}")
+        LOGGER(__name__).error(f"[AutoPlay] CRITICAL ERROR: {e}")
         import traceback
         traceback.print_exc()
         return 0
