@@ -57,10 +57,10 @@ async def can_toggle_autoplay(chat_id: int, user_id: int) -> bool:
 def autoplay_markup(status: bool):
     # Green button when ON, Red button when OFF
     if status:
-        button_text = "✅ ᴇɴᴀʙʟᴇᴅ"
+        button_text = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ"
         toggle_state = "off"  # Click to turn off
     else:
-        button_text = "❌ ᴅɪsᴀʙʟᴇᴅ"
+        button_text = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
         toggle_state = "on"  # Click to turn on
 
     return InlineKeyboardMarkup(
@@ -125,11 +125,11 @@ async def autoplay_callback(_, callback_query: CallbackQuery, __):
     if state == "on":
         await autoplay_on(chat_id)
         status = True
-        alert = "Autoplay enabled ✅"
+        alert = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴇɴᴀʙʟᴇᴅ"
     else:
         await autoplay_off(chat_id)
         status = False
-        alert = "Autoplay disabled ❌"
+        alert = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴅɪsᴀʙʟᴇᴅ"
 
     await callback_query.answer(alert, show_alert=True)
 
