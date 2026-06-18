@@ -7,6 +7,7 @@ from AxiomMusic.misc import db
 from AxiomMusic.utils.database import is_autoplay, get_autoplay_lang, get_autoplay_mood, set_autoplay_lang, set_autoplay_mood
 from AxiomMusic.utils.stream.queue import put_queue
 from py_yt import VideosSearch
+from config import LOGGER_ID
 
 # ==========================================
 # CONFIGURATION
@@ -18,72 +19,39 @@ PLAYED_HISTORY = {}
 CHANNEL_INDEX = {}
 
 # ==========================================
+# TELEGRAM LOG HELPER
+# ==========================================
+async def send_log(message: str):
+    """Send log message to LOGGER_ID group"""
+    try:
+        if LOGGER_ID:
+            await app.send_message(
+                LOGGER_ID,
+                f"<b>[AutoPlay]</b>\n{message}",
+                disable_web_page_preview=True
+            )
+    except Exception as e:
+        LOGGER(__name__).error(f"[AutoPlay] Failed to send log to LOGGER_ID: {e}")
+
+# ==========================================
 # SPECIAL UNICODE FONT CONVERTER (FIXED)
 # ==========================================
 def convert_to_special_font(text: str) -> str:
     font_map = {
-        "a": "ᴧ",
-        "b": "ʙ",
-        "c": "ᴄ",
-        "d": "ᴅ",
-        "e": "є",
-        "f": "ғ",
-        "g": "ɢ",
-        "h": "ʜ",
-        "i": "ɪ",
-        "j": "ᴊ",
-        "k": "ᴋ",
-        "l": "ʟ",
-        "m": "ϻ",
-        "n": "η",
-        "o": "σ",
-        "p": "ᴘ",
-        "q": "ǫ",
-        "r": "ꝛ",
-        "s": "s",
-        "t": "ᴛ",
-        "u": "υ",
-        "v": "ᴠ",
-        "w": "ᴡ",
-        "x": "x",
-        "y": "ʏ",
+        "a": "ᴧ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "є",
+        "f": "ғ", "g": "ɢ", "h": "ʜ", "i": "ɪ", "j": "ᴊ",
+        "k": "ᴋ", "l": "ʟ", "m": "ϻ", "n": "η", "o": "σ",
+        "p": "ᴘ", "q": "ǫ", "r": "ꝛ", "s": "s", "t": "ᴛ",
+        "u": "υ", "v": "ᴠ", "w": "ᴡ", "x": "x", "y": "ʏ",
         "z": "ᴢ",
-        "A": "𝐀‌",
-        "B": "𝐁‌",
-        "C": "𝐂‌",
-        "D": "𝐃‌",
-        "E": "𝐄‌",
-        "F": "𝐅‌",
-        "G": "𝐆‌",
-        "H": "𝐇‌",
-        "I": "𝐈‌",
-        "J": "𝐉‌",
-        "K": "𝐊‌",
-        "L": "𝐋‌",
-        "M": "𝐌‌",
-        "N": "𝐍‌",
-        "O": "𝐎‌",
-        "P": "𝐏‌",
-        "Q": "𝐐‌",
-        "R": "𝐑‌",
-        "S": "𝐒‌",
-        "T": "𝐓‌",
-        "U": "𝐔‌",
-        "V": "𝐕‌",
-        "W": "𝐖‌",
-        "X": "𝐗‌",
-        "Y": "𝐘‌",
+        "A": "𝐀‌", "B": "𝐁‌", "C": "𝐂‌", "D": "𝐃‌", "E": "𝐄‌",
+        "F": "𝐅‌", "G": "𝐆‌", "H": "𝐇‌", "I": "𝐈‌", "J": "𝐉‌",
+        "K": "𝐊‌", "L": "𝐋‌", "M": "𝐌‌", "N": "𝐍‌", "O": "𝐎‌",
+        "P": "𝐏‌", "Q": "𝐐‌", "R": "𝐑‌", "S": "𝐒‌", "T": "𝐓‌",
+        "U": "𝐔‌", "V": "𝐕‌", "W": "𝐖‌", "X": "𝐗‌", "Y": "𝐘‌",
         "Z": "𝐙‌",
-        "0": "𝟶",
-        "1": "𝟷",
-        "2": "𝟸",
-        "3": "𝟹",
-        "4": "𝟺",
-        "5": "𝟻",
-        "6": "𝟼",
-        "7": "𝟽",
-        "8": "𝟾",
-        "9": "𝟿",
+        "0": "𝟶", "1": "𝟷", "2": "𝟸", "3": "𝟹", "4": "𝟺",
+        "5": "𝟻", "6": "𝟼", "7": "𝟽", "8": "𝟾", "9": "𝟿",
     }
     return ''.join([font_map.get(c, c) for c in text])
 
@@ -383,7 +351,6 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 20) -> list
         
         results = []
         if not res or not res.get("result"):
-            LOGGER(__name__).warning(f"[AutoPlay] No results for {channel_name}")
             return results
         
         for video in res["result"]:
@@ -391,7 +358,6 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 20) -> list
                 channel_info = video.get("channel", {})
                 channel_title = channel_info.get("name", "").lower() if channel_info else ""
                 
-                # Filter to ensure it's from the correct channel/artist
                 if channel_name.lower() not in ["t-series", "sony music", "zee music", "shemaroo", "rotana", "mazzika", "netd"]:
                     if channel_name.lower().split()[0] not in channel_title:
                         continue
@@ -403,12 +369,10 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 20) -> list
                     "channel": channel_title
                 })
             except Exception as e:
-                LOGGER(__name__).error(f"[AutoPlay] Video parse error: {e}")
                 continue
         
         return results
     except Exception as e:
-        LOGGER(__name__).error(f"[AutoPlay] Channel fetch error for {channel_name}: {e}")
         return []
 
 # ==========================================
@@ -523,39 +487,9 @@ def is_bad_song(title: str, duration_sec: int) -> bool:
     if duration_sec < 90 or duration_sec > 900: return True
     return False
 
-def duration_to_seconds(duration):
-    if not duration:
-        return 180
-
-    if isinstance(duration, int):
-        return duration
-
-    try:
-        parts = [int(x) for x in str(duration).split(":")]
-
-        if len(parts) == 3:
-            h, m, s = parts
-            return h * 3600 + m * 60 + s
-
-        if len(parts) == 2:
-            m, s = parts
-            return m * 60 + s
-
-        if len(parts) == 1:
-            return parts[0]
-
-    except:
-        pass
-
-    return 180
-    
 # ==========================================
-# MAIN AUTOPLAY FUNCTION (FIXED)
+# MAIN AUTOPLAY FUNCTION (WITH TELEGRAM LOGS)
 # ==========================================
-# Replace the entire queue_autoplay_tracks function in AxiomMusic/utils/stream/autoplay.py
-
-# Replace the entire queue_autoplay_tracks function
-
 async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUTOPLAY_BATCH_SIZE) -> int:
     if not seed_track or not await is_autoplay(chat_id): return 0
     if _autoplay_fetching.get(chat_id): return 0
@@ -571,7 +505,8 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
     
-    LOGGER(__name__).info(f"[AutoPlay] Starting - Lang: {lang}, Mood: {mood}")
+    # SEND LOG TO TELEGRAM
+    await send_log(f"🎵 <b>Starting AutoPlay</b>\n📍 Chat: <code>{chat_id}</code>\n🌐 Language: <b>{lang}</b>\n🎭 Mood: <b>{mood}</b>\n🎶 Seed: <code>{seed_title[:50]}</code>")
     
     if chat_id not in PLAYED_HISTORY: PLAYED_HISTORY[chat_id] = []
     history = PLAYED_HISTORY[chat_id]
@@ -602,7 +537,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             if not channels:
                 continue
             
-            LOGGER(__name__).info(f"[AutoPlay] Trying strategy: {try_lang}/{try_mood} - {len(channels)} channels")
+            await send_log(f"🔍 Trying strategy: <b>{try_lang}/{try_mood}</b> - {len(channels)} channels")
             
             for channel_name in channels:
                 if len(candidates) >= limit * 2: break
@@ -611,7 +546,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 if not videos:
                     continue
                 
-                # Less strict filtering - just check language
                 filtered = filter_by_language(videos, try_lang)
                 
                 for video in filtered:
@@ -623,7 +557,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     if not vid_id or vid_id in queued_vids:
                         continue
                     
-                    # Check history
                     is_dup = False
                     for played in history:
                         if played.get("vidid") == vid_id:
@@ -637,15 +570,14 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                         candidates.append({
                             "id": vid_id,
                             "title": vid_title,
-                            "duration": 180  # Default duration
+                            "duration": 180
                         })
-                        LOGGER(__name__).info(f"[AutoPlay] Candidate: {vid_title[:40]}")
         
-        LOGGER(__name__).info(f"[AutoPlay] Total candidates from channels: {len(candidates)}")
+        await send_log(f"📊 Total candidates from channels: <b>{len(candidates)}</b>")
         
         # Fallback: Direct YouTube search
         if len(candidates) < 3:
-            LOGGER(__name__).info(f"[AutoPlay] Using YouTube search fallback")
+            await send_log(f"⚠️ Low candidates, using YouTube search fallback")
             search_queries = [
                 f"{lang} {mood} songs 2024",
                 f"{lang} {mood} hits",
@@ -657,7 +589,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 if len(candidates) >= limit * 2:
                     break
                 try:
-                    LOGGER(__name__).info(f"[AutoPlay] Searching: {query}")
                     result, vidid = await YouTube.track(query)
                     if result and vidid:
                         if vidid not in queued_vids:
@@ -673,19 +604,17 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                                     "title": result.get("title"),
                                     "duration": 180
                                 })
-                                LOGGER(__name__).info(f"[AutoPlay] Search result: {result.get('title', '')[:40]}")
                 except Exception as e:
-                    LOGGER(__name__).error(f"[AutoPlay] Search error for '{query}': {e}")
                     continue
         
         if not candidates:
-            LOGGER(__name__).error("[AutoPlay] CRITICAL: No candidates found at all!")
+            await send_log(f"❌ <b>CRITICAL:</b> No candidates found at all!")
             return 0
         
-        LOGGER(__name__).info(f"[AutoPlay] Final candidates: {len(candidates)}")
         random.shuffle(candidates)
 
         # Add to queue
+        added_titles = []
         for candidate in candidates:
             if added >= limit: break
             
@@ -697,7 +626,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 if not title: title = candidate.get("title", "Unknown")
                 if not duration_min or duration_min == "0:00": duration_min = "3:00"
             except Exception as e:
-                LOGGER(__name__).error(f"[AutoPlay] Details error: {e}")
                 title = candidate.get("title", "Unknown")
                 duration_min = "3:00"
                 duration_sec = 180
@@ -712,19 +640,21 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 history.append({"vidid": next_vidid, "title": title})
                 queued_vids.add(next_vidid)
                 added += 1
-                LOGGER(__name__).info(f"[AutoPlay] ✓✓✓ ADDED: {title[:50]}")
+                added_titles.append(f"• {title[:40]}")
             except Exception as e:
-                LOGGER(__name__).error(f"[AutoPlay] Queue error: {e}")
-                import traceback
-                traceback.print_exc()
+                continue
 
-        LOGGER(__name__).info(f"[AutoPlay] ✓✓✓ SUCCESS: Added {added} songs to queue")
+        # SEND SUCCESS LOG TO TELEGRAM
+        if added > 0:
+            titles_list = "\n".join(added_titles[:10])
+            await send_log(f"✅ <b>SUCCESS:</b> Added <b>{added}</b> songs to queue\n\n{titles_list}")
+        else:
+            await send_log(f"⚠️ No songs could be added to queue")
+        
         return added
         
     except Exception as e:
-        LOGGER(__name__).error(f"[AutoPlay] CRITICAL ERROR: {e}")
-        import traceback
-        traceback.print_exc()
+        await send_log(f"🔥 <b>CRITICAL ERROR:</b> {str(e)}")
         return 0
     finally:
         _autoplay_fetching[chat_id] = False
@@ -733,5 +663,5 @@ async def maybe_refetch_autoplay(chat_id: int, seed_track: dict):
     if not seed_track: return
     current_queue = len(db.get(chat_id, []))
     if current_queue <= AUTOPLAY_REFETCH_THRESHOLD:
-        LOGGER(__name__).info(f"[AutoPlay] Trigger - Queue: {current_queue}")
+        await send_log(f"🔄 <b>Trigger AutoPlay</b> - Queue: <b>{current_queue}</b>")
         asyncio.create_task(queue_autoplay_tracks(chat_id, seed_track))
