@@ -1,5 +1,6 @@
 import asyncio
 import random
+import re
 import config
 from AxiomMusic import LOGGER, YouTube, app
 from AxiomMusic.misc import db
@@ -11,43 +12,53 @@ AUTOPLAY_REFETCH_THRESHOLD = 3
 _autoplay_fetching = {}
 PLAYED_HISTORY = {}
 
+def get_first_words(title: str, n=3) -> set:
+    """Extracts the first N meaningful words from a title."""
+    if not title:
+        return set()
+    # Remove brackets
+    title = re.sub(r'\([^)]*\)', '', title)
+    title = re.sub(r'\[[^\]]*\]', '', title)
+    # Lowercase and keep only alphanumeric
+    title = ''.join(c for c in title.lower() if c.isalnum() or c.isspace())
+    words = title.split()
+    
+    # Noise words to ignore
+    noise = {
+        'official', 'video', 'audio', 'full', 'song', 'lyrics', 'lyrical', 
+        'hd', '4k', '8k', '1080p', 'new', 'title', 'the', 'a', 'of', 'in', 
+        'on', 'with', 'flute', 'version', 'cover', 'dance', 'slowed', 'reverb', 
+        'lofi', 'sped', '8d', 'mix', 'remix'
+    }
+    words = [w for w in words if w not in noise]
+    return set(words[:n])
+
 def is_same_song(title1: str, title2: str) -> bool:
     """
-    Check if two titles are basically the same song
-    Example: "Sanam Re" and "Sanam Re 8K" = SAME
+    Checks if two titles are the same song by comparing their first 3 meaningful words.
+    This prevents 'Sanam Re 8K' from matching 'Sanam Re', 
+    BUT allows 'Hua Hain Aaj Pehli Baar | Sanam Re' to pass!
     """
-    if not title1 or not title2:
+    w1 = get_first_words(title1, 3)
+    w2 = get_first_words(title2, 3)
+    
+    if not w1 or not w2:
         return False
     
-    # Convert to lowercase and remove special chars
-    t1 = ''.join(c for c in title1.lower() if c.isalnum() or c.isspace())
-    t2 = ''.join(c for c in title2.lower() if c.isalnum() or c.isspace())
-    
-    # Split into words
-    words1 = set(t1.split())
-    words2 = set(t2.split())
-    
-    # Remove common words
-    common_words = {'related singer songs','song', 'video', 'audio', 'official', 'full', 'hd', '4k', '8k', 'new', 'title'}
-    words1 = words1 - common_words
-    words2 = words2 - common_words
-    
-    # If 70% words match, it's the same song
-    if not words1 or not words2:
-        return False
-    
-    intersection = words1 & words2
-    similarity = len(intersection) / min(len(words1), len(words2))
-    
-    return similarity >= 0.7
+    intersection = w1 & w2
+    # If they share at least 2 words in their first 3 words, it's the same song
+    return len(intersection) >= 2
 
 def is_bad_song(title: str, duration_sec: int) -> bool:
-    """Reject jukebox/mix/compilation"""
+    """Rejects jukebox, mashup, compilation, etc."""
     if not title:
         return True
     
     title_lower = title.lower()
-    bad_words = ['jukebox', 'mix', 'album', 'mashup', 'compilation', 'playlist', 'full movie', 'medley', 'collection']
+    bad_words = [
+        'jukebox', 'album', 'compilation', 'playlist', 'full movie', 
+        'medley', 'collection', 'mashup', 'non stop', '1 hour', '60 min'
+    ]
     
     for word in bad_words:
         if word in title_lower:
@@ -76,16 +87,13 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     
     # Init history for this chat
     if chat_id not in PLAYED_HISTORY:
-        PLAYED_HISTORY[chat_id] = []  # List of titles
+        PLAYED_HISTORY[chat_id] = []
     
     history = PLAYED_HISTORY[chat_id]
     
     # Add current song to history
     if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
-        history.append({
-            "vidid": seed_video_id,
-            "title": seed_title
-        })
+        history.append({"vidid": seed_video_id, "title": seed_title})
     
     # Get current queue
     current_queue = db.get(chat_id, [])
@@ -107,20 +115,14 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     rel_title = rel.get("title", "")
                     rel_dur = rel.get("duration", 0)
                     
-                    # Skip if no ID
-                    if not rel_id:
+                    if not rel_id or rel_id in queued_vids:
                         continue
                     
-                    # Skip if already in queue
-                    if rel_id in queued_vids:
-                        continue
-                    
-                    # Skip if bad song (jukebox, etc)
                     if is_bad_song(rel_title, rel_dur):
                         LOGGER(__name__).info(f"[AutoPlay] Rejected (bad): {rel_title[:50]}")
                         continue
                     
-                    # CRITICAL: Check if same as ANY previously played song
+                    # Check if same as ANY previously played song
                     is_duplicate = False
                     for played in history:
                         if played.get("vidid") == rel_id:
@@ -134,7 +136,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     if is_duplicate:
                         continue
                     
-                    # Valid candidate!
                     candidates.append({
                         "id": rel_id,
                         "title": rel_title,
@@ -145,9 +146,42 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Related error: {e}")
 
+        # Method 2: FALLBACK SEARCH (If related videos failed to find enough unique songs)
+        if len(candidates) < 3:
+            LOGGER(__name__).info(f"[AutoPlay] Not enough related songs ({len(candidates)}), using fallback search...")
+            fallback_queries = [
+                "latest hindi songs 2024",
+                "new bollywood songs",
+                "latest punjabi songs",
+                "indian indie songs",
+                "arijit singh new songs"
+            ]
+            
+            for query in fallback_queries:
+                if len(candidates) >= limit:
+                    break
+                    
+                try:
+                    result, vidid = await YouTube.track(query)
+                    if result and vidid and vidid not in queued_vids:
+                        # Check history
+                        is_dup = False
+                        for played in history:
+                            if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
+                                is_dup = True
+                                break
+                        
+                        if not is_dup and not is_bad_song(result.get("title", ""), 0):
+                            candidates.append({
+                                "id": vidid,
+                                "title": result.get("title"),
+                                "duration": 0
+                            })
+                            LOGGER(__name__).info(f"[AutoPlay] ✓ Fallback found: {result.get('title', '')[:40]}")
+                except Exception as e:
+                    LOGGER(__name__).error(f"[AutoPlay] Fallback search error: {e}")
+
         LOGGER(__name__).info(f"[AutoPlay] Total valid candidates: {len(candidates)}")
-        
-        # Shuffle for variety
         random.shuffle(candidates)
 
         # Add to queue
@@ -178,7 +212,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             if is_bad_song(title, duration_sec):
                 continue
             
-            # Check if same as any played song
             is_dup = False
             for played in history:
                 if is_same_song(played.get("title", ""), title):
@@ -202,11 +235,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     streamtype,
                 )
                 
-                # Add to history
-                history.append({
-                    "vidid": next_vidid,
-                    "title": title
-                })
+                history.append({"vidid": next_vidid, "title": title})
                 queued_vids.add(next_vidid)
                 added += 1
                 
