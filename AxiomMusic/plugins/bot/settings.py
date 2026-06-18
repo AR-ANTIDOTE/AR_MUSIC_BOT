@@ -20,7 +20,7 @@ from pyrogram import filters
 from time import time, strftime, gmtime
 from pyrogram import __version__ as pver
 from pyrogram.types import InputMediaVideo, InputMediaPhoto
-from pyrogram.enums import ChatMemberStatus, ChatType
+from pyrogram.enums import ChatMemberStatus, ChatType, ButtonStyle
 from pyrogram.types import WebAppInfo
 from pyrogram.errors import MessageNotModified
 from pyrogram.types import (
