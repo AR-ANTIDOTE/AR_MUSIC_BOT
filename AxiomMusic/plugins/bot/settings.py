@@ -114,18 +114,24 @@ async def can_toggle_feature(chat_id: int, user_id: int) -> bool:
 
 
 def feature_markup(status: bool):
-    # Only thumbnail - removed autoplay callback
-    toggle_text = "ᴛᴜʀɴ ᴏғғ ❌" if status else "ᴛᴜʀɴ ᴏɴ ✅"
+    toggle_text = "🖼 ᴛʜᴜᴍʙɴᴀɪʟ : ᴏɴ" if status else "🖼 ᴛʜᴜᴍʙɴᴀɪʟ : ᴏғғ"
     toggle_state = "off" if status else "on"
+
+    toggle_style = (
+        ButtonStyle.SUCCESS
+        if status
+        else ButtonStyle.DANGER
+    )
+
     return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    toggle_text,
+                    text=toggle_text,
                     callback_data=f"thumbnail_toggle|{toggle_state}",
+                    style=toggle_style,
                 )
             ],
-            [InlineKeyboardButton("⋞ ᴄʟᴏsє ⋟", callback_data="close")],
         ]
     )
 
