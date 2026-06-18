@@ -34,14 +34,11 @@ from AxiomMusic import app
 from AxiomMusic.misc import SUDOERS
 from AxiomMusic.utils.database import (
     add_nonadmin_chat,
-    autoplay_off,
-    autoplay_on,
     get_authuser,
     get_authuser_names,
     get_playmode,
     get_playtype,
     get_upvote_count,
-    is_autoplay,
     is_nonadmin_chat,
     is_skipmode,
     is_thumbmode,
@@ -72,8 +69,9 @@ Axiomm_PIC = [
 ]
 
 
+# REMOVED: autoplay and aplay from regex - only thumbnail commands
 TOGGLE_COMMAND_RE = re.compile(
-    r"^[!/.](?P<command>autoplay|aplay|thumbnail|thumb|thum)(?:@\w+)?"
+    r"^[!/.](?P<command>thumbnail|thumb|thum)(?:@\w+)?"
     r"(?:\s+(?P<state>on|off|enable|disable|enabled|disabled))?\s*$",
     re.IGNORECASE,
 )
@@ -115,8 +113,8 @@ async def can_toggle_feature(chat_id: int, user_id: int) -> bool:
     )
 
 
-def feature_markup(feature: str, status: bool):
-    callback_prefix = "autoplay_toggle" if feature == "autoplay" else "thumbnail_toggle"
+def feature_markup(status: bool):
+    # Only thumbnail - removed autoplay callback
     toggle_text = "ᴛᴜʀɴ ᴏғғ ❌" if status else "ᴛᴜʀɴ ᴏɴ ✅"
     toggle_state = "off" if status else "on"
     return InlineKeyboardMarkup(
@@ -124,7 +122,7 @@ def feature_markup(feature: str, status: bool):
             [
                 InlineKeyboardButton(
                     toggle_text,
-                    callback_data=f"{callback_prefix}|{toggle_state}",
+                    callback_data=f"thumbnail_toggle|{toggle_state}",
                 )
             ],
             [InlineKeyboardButton("⋞ ᴄʟᴏsє ⋟", callback_data="close")],
@@ -132,26 +130,18 @@ def feature_markup(feature: str, status: bool):
     )
 
 
-def autoplay_panel_text(status: bool):
-    current = "ᴇɴᴀʙʟᴇᴅ ✅" if status else "ᴅɪsᴀʙʟᴇᴅ ❌"
-    return (
-        "<b>♬ ᴀᴜᴛᴏᴘʟᴀʏ sᴇᴛᴛɪɴɢs</b>\n\n"
-        f"<b>ᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs:</b> {current}\n\n"
-        "<b>Quick use:</b> <code>/autoplay on</code> | <code>/autoplay off</code>"
-    )
-
-
 def thumbnail_panel_text(status: bool):
-    current = "ᴇɴᴀʙʟᴇᴅ ✅" if status else "ᴅɪsᴀʙʟᴇᴅ ❌"
+    current = "ᴇɴᴀʙᴇᴅ ✅" if status else "ᴅɪsᴀʙʟᴇᴅ ❌"
     return (
-        "<b>𝚻ʜ꧊‌𝛖ϻβηᴧιℓ 𝚺ᴇᴛᴛɪɴɢs</b>\n\n"
+        "<b>𝚻ʜ꧊‌𝛖ϻβηιℓ ᴇᴛᴛɴɢs</b>\n\n"
         f"<b>ᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs:</b> {current}\n\n"
         "<b>Quick use:</b> <code>/thumb on</code> | <code>/thumb off</code>"
     )
 
 
+# REMOVED: autoplay handling - only thumbnail
 @app.on_message(filters.create(toggle_command_filter) & filters.group & ~BANNED_USERS, group=-1)
-async def autoplay_thumbnail_toggle_command(_, message: Message):
+async def thumbnail_toggle_command(_, message: Message):
     if not message.from_user:
         return await message.reply_text("<b>Please use this command from a user account.</b>")
 
@@ -159,60 +149,44 @@ async def autoplay_thumbnail_toggle_command(_, message: Message):
     if not command:
         return
 
-    is_auto_command = command in ["autoplay", "aplay"]
-    feature = "autoplay" if is_auto_command else "thumbnail"
     chat_id = message.chat.id
 
     if state in ["on", "enable", "enabled", "off", "disable", "disabled"]:
         if not await can_toggle_feature(chat_id, message.from_user.id):
-            return await message.reply_text(f"<b>Only admins can change {feature} mode.</b>")
+            return await message.reply_text(f"<b>Only admins can change thumbnail mode.</b>")
         enable = state in ["on", "enable", "enabled"]
-        if is_auto_command:
-            await autoplay_on(chat_id) if enable else await autoplay_off(chat_id)
-        else:
-            await thumb_on(chat_id) if enable else await thumb_off(chat_id)
+        await thumb_on(chat_id) if enable else await thumb_off(chat_id)
         status = enable
     else:
-        status = await is_autoplay(chat_id) if is_auto_command else await is_thumbmode(chat_id)
+        status = await is_thumbmode(chat_id)
 
     await message.reply_text(
-        autoplay_panel_text(status) if is_auto_command else thumbnail_panel_text(status),
-        reply_markup=feature_markup(feature, status),
+        thumbnail_panel_text(status),
+        reply_markup=feature_markup(status),
         disable_web_page_preview=True,
     )
 
 
-@app.on_callback_query(filters.regex(r"^(autoplay_toggle|thumbnail_toggle)\|(on|off)$") & ~BANNED_USERS, group=-1)
-async def autoplay_thumbnail_toggle_callback(_, callback_query: CallbackQuery):
-    feature, state = callback_query.data.split("|", 1)
-    is_auto_callback = feature == "autoplay_toggle"
+@app.on_callback_query(filters.regex(r"^thumbnail_toggle\|(on|off)$") & ~BANNED_USERS, group=-1)
+async def thumbnail_toggle_callback(_, callback_query: CallbackQuery):
+    state = callback_query.data.split("|", 1)[1]
     chat_id = callback_query.message.chat.id
 
     if not await can_toggle_feature(chat_id, callback_query.from_user.id):
-        label = "autoplay" if is_auto_callback else "thumbnail"
         return await callback_query.answer(
-            f"Only admins can change {label} mode.", show_alert=True
+            f"Only admins can change thumbnail mode.", show_alert=True
         )
 
     enable = state == "on"
-    if is_auto_callback:
-        await autoplay_on(chat_id) if enable else await autoplay_off(chat_id)
-        label = "Autoplay"
-        text = autoplay_panel_text(enable)
-        markup = feature_markup("autoplay", enable)
-    else:
-        await thumb_on(chat_id) if enable else await thumb_off(chat_id)
-        label = "Thumbnail"
-        text = thumbnail_panel_text(enable)
-        markup = feature_markup("thumbnail", enable)
-
+    await thumb_on(chat_id) if enable else await thumb_off(chat_id)
+    
     await callback_query.answer(
-        f"{label} {'enabled ✅' if enable else 'disabled ❌'}",
+        f"Thumbnail {'enabled ✅' if enable else 'disabled ❌'}",
         show_alert=True,
     )
     await callback_query.edit_message_text(
-        text,
-        reply_markup=markup,
+        thumbnail_panel_text(enable),
+        reply_markup=feature_markup(enable),
         disable_web_page_preview=True,
     )
 
@@ -283,14 +257,14 @@ async def gib_repo_callback(_, callback_query):
         media=InputMediaVideo(
             "https://telegra.ph/file/b1367262cdfbcd0b2af07.mp4", 
             has_spoiler=True, 
-            caption="ʟᴜɴᴅ ʟᴇʟᴇ ᴍᴇʀᴀ ʀᴇᴘᴏ ᴋʏᴀ ᴋᴀʀᴇɢᴀ, ʟᴇɢᴀ ᴋʏᴀ ʙʜᴏsᴀᴅɪᴋᴇ"
+            caption="ʟᴜɴᴅ ʟᴇʟᴇ ᴍᴇʀ ʀᴇᴘᴏ ᴋʏᴀ ᴋʀᴇɢᴀ, ʟᴇɢᴀ ᴋʏ ʙʜsᴀᴅɪᴋᴇ"
         ),
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(text="• ʙᴀᴄᴋ •", callback_data="settingsback_helper"),
                     InlineKeyboardButton(text=_["S_B_5"], user_id=config.OWNER_ID),
-                    InlineKeyboardButton(text="• ᴄʟᴏsᴇ •", callback_data="close")
+                    InlineKeyboardButton(text="• ᴄʟsᴇ •", callback_data="close")
                 ]
             ]
         ),
@@ -301,15 +275,15 @@ async def show_bot_info(c: app, q: CallbackQuery):
     start = time()
     await asyncio.sleep(0.1)
     delta_ping = time() - start
-    txt = f"""💌 ʏᴏᴜᴛᴜʙᴇ ᴀᴘɪ sᴛᴀᴛᴜs...
+    txt = f"""💌 ʏᴏᴛᴜʙ ᴀᴘ sᴛᴀᴛᴜs...
 
-• ᴅᴀᴛᴀʙᴀsᴇ: ᴏɴʟɪɴᴇ
-• ʏᴏᴜᴛᴜʙᴇ ᴀᴘɪ: ʀᴇsᴘᴏɴsɪᴠᴇ
-• ʙᴏᴛ sᴇʀᴠᴇʀ: ʀᴜɴɴɪɴɢ sᴍᴏᴏᴛʜʟʏ
-• ʀᴇsᴘᴏɴsᴇ ᴛɪᴍᴇ: ᴏᴘᴛɪᴍᴀʟ
+• ᴅᴀᴛʙᴀsᴇ: ᴏɴʟɪɴᴇ
+• ʏᴏᴜᴛᴜʙ ᴀᴘɪ: ʀᴇsᴘᴏɴsɪᴠᴇ
+• ʙᴏᴛ sᴇʀᴠᴇʀ: ʀᴜɴɴɴɢ sᴍᴏᴛʜʏ
+• ᴇsᴘᴏɴsᴇ ᴛɪᴍᴇ: ᴏᴘᴛɪᴍᴀ
 • ᴀᴘɪ ᴘɪɴɢ: {delta_ping * 1000:.3f} ms   
 
-ᴇᴠᴇʀʏᴛʜɪɴɢ ʟᴏᴏᴋs ɢᴏᴏᴅ!
+ᴇᴠᴇʀʏᴛʜɴɢ ʟᴏᴋs ᴏᴏ!
 """
     await q.answer(txt, show_alert=True)
 
@@ -317,7 +291,7 @@ async def show_bot_info(c: app, q: CallbackQuery):
 @languageCB
 async def support(client, CallbackQuery, _):
     await CallbackQuery.edit_message_text(
-        text="💌 ʜᴇʀᴇ ᴀʀᴇ ꜱᴏᴍᴇ ɪᴍᴘᴏʀᴛᴀɴᴛ ʟɪɴᴋꜱ.\nᴊᴏɪɴ ᴘʟᴇᴀsᴇ...💞",
+        text="💌 ʜᴇʀᴇ ʀᴇ ꜱᴏᴇ ɪᴘᴏʀᴛᴀɴᴛ ʟɪɴᴋ.\nᴊɪɴ ᴘᴇᴀsᴇ...💞",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
@@ -328,7 +302,7 @@ async def support(client, CallbackQuery, _):
                 ],
                 [
                     InlineKeyboardButton(
-                        text="⌯ sᴜᴘᴘᴏʀᴛ ⌯", url=config.SUPPORT_CHAT
+                        text="⌯ sᴘᴘᴏʀᴛ ⌯", url=config.SUPPORT_CHAT
                     ),
                     InlineKeyboardButton(
                         text="⌯ ᴜᴘᴅᴀᴛᴇs ⌯", url=config.SUPPORT_CHANNEL
