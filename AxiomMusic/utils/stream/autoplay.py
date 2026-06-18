@@ -18,21 +18,72 @@ PLAYED_HISTORY = {}
 CHANNEL_INDEX = {}
 
 # ==========================================
-# SPECIAL UNICODE FONT CONVERTER
+# SPECIAL UNICODE FONT CONVERTER (FIXED)
 # ==========================================
 def convert_to_special_font(text: str) -> str:
     font_map = {
-        'a': 'ᴧ', 'b': '', 'c': 'ϲ', 'd': 'ᴅ', 'e': 'є', 
-        'f': 'ꜰ', 'g': 'ɢ', 'h': 'ʜ', 'i': 'ɪ', 'j': 'ᴊ',
-        'k': 'ᴋ', 'l': 'ʟ', 'm': 'ϻ', 'n': 'η', 'o': 'σ',
-        'p': 'ρ', 'q': '', 'r': 'ʀ', 's': 'ѕ', 't': 'ᴛ',
-        'u': 'υ', 'v': 'ᴠ', 'w': 'ω', 'x': 'x', 'y': 'ʏ',
-        'z': 'ᴢ', 'A': 'ᴧ', 'B': 'ϻ', 'C': 'ϲ', 'D': 'ᴅ',
-        'E': 'є', 'F': '', 'G': 'ɢ', 'H': 'ʜ', 'I': 'ɪ',
-        'J': 'ᴊ', 'K': 'ᴋ', 'L': 'ʟ', 'M': 'ϻ', 'N': 'η',
-        'O': 'σ', 'P': 'ρ', 'Q': 'ǫ', 'R': 'ʀ', 'S': 'ѕ',
-        'T': 'ᴛ', 'U': 'υ', 'V': 'ᴠ', 'W': 'ω', 'X': 'x',
-        'Y': '', 'Z': 'ᴢ'
+        "a": "ᴧ",
+        "b": "ʙ",
+        "c": "ᴄ",
+        "d": "ᴅ",
+        "e": "є",
+        "f": "ғ",
+        "g": "ɢ",
+        "h": "ʜ",
+        "i": "ɪ",
+        "j": "ᴊ",
+        "k": "ᴋ",
+        "l": "ʟ",
+        "m": "ϻ",
+        "n": "η",
+        "o": "σ",
+        "p": "ᴘ",
+        "q": "ǫ",
+        "r": "ꝛ",
+        "s": "s",
+        "t": "ᴛ",
+        "u": "υ",
+        "v": "ᴠ",
+        "w": "ᴡ",
+        "x": "x",
+        "y": "ʏ",
+        "z": "ᴢ",
+        "A": "𝐀‌",
+        "B": "𝐁‌",
+        "C": "𝐂‌",
+        "D": "𝐃‌",
+        "E": "𝐄‌",
+        "F": "𝐅‌",
+        "G": "𝐆‌",
+        "H": "𝐇‌",
+        "I": "𝐈‌",
+        "J": "𝐉‌",
+        "K": "𝐊‌",
+        "L": "𝐋‌",
+        "M": "𝐌‌",
+        "N": "𝐍‌",
+        "O": "𝐎‌",
+        "P": "𝐏‌",
+        "Q": "𝐐‌",
+        "R": "𝐑‌",
+        "S": "𝐒‌",
+        "T": "𝐓‌",
+        "U": "𝐔‌",
+        "V": "𝐕‌",
+        "W": "𝐖‌",
+        "X": "𝐗‌",
+        "Y": "𝐘‌",
+        "Z": "𝐙‌",
+        "0": "𝟶",
+        "1": "𝟷",
+        "2": "𝟸",
+        "3": "𝟹",
+        "4": "𝟺",
+        "5": "𝟻",
+        "6": "𝟼",
+        "7": "𝟽",
+        "8": "𝟾",
+        "9": "𝟿",
     }
     return ''.join([font_map.get(c, c) for c in text])
 
@@ -55,7 +106,7 @@ GLOBAL_MUSIC_DATABASE = {
         "phonk": []
     },
     "english": {
-        "romantic": ["Ed Sheeran", "Taylor Swift", "John Legend", "Sam Smith", "Shawn Mendes", "Adele"],
+        "romantic": ["Alan Walker", "Ed Sheeran", "Taylor Swift", "John Legend", "Sam Smith", "Shawn Mendes", "Adele"],
         "sad": ["Billie Eilish", "Lewis Capaldi", "Olivia Rodrigo", "Halsey", "The Weeknd"],
         "happy": ["Bruno Mars", "Pharrell Williams", "Justin Bieber", "Katy Perry", "Dua Lipa"],
         "party": ["David Guetta", "Calvin Harris", "Marshmello", "Martin Garrix", "The Chainsmokers"],
@@ -323,15 +374,20 @@ GLOBAL_MUSIC_DATABASE = {
 }
 
 # ==========================================
-# CHANNEL VIDEO FETCHER
+# CHANNEL VIDEO FETCHER (FIXED)
 # ==========================================
 async def fetch_channel_videos(channel_name: str, max_results: int = 20) -> list:
     try:
         search = VideosSearch(channel_name, limit=max_results)
         res = await search.next()
+        
         results = []
-        if res and res.get("result"):
-            for video in res["result"]:
+        if not res or not res.get("result"):
+            LOGGER(__name__).warning(f"[AutoPlay] No results for {channel_name}")
+            return results
+        
+        for video in res["result"]:
+            try:
                 channel_info = video.get("channel", {})
                 channel_title = channel_info.get("name", "").lower() if channel_info else ""
                 
@@ -346,6 +402,10 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 20) -> list
                     "duration": video.get("duration"),
                     "channel": channel_title
                 })
+            except Exception as e:
+                LOGGER(__name__).error(f"[AutoPlay] Video parse error: {e}")
+                continue
+        
         return results
     except Exception as e:
         LOGGER(__name__).error(f"[AutoPlay] Channel fetch error for {channel_name}: {e}")
@@ -357,6 +417,7 @@ async def fetch_channel_videos(channel_name: str, max_results: int = 20) -> list
 def filter_by_mood(videos: list, mood: str) -> list:
     if mood == "any" or not mood:
         return videos
+    
     filtered = []
     mood_keywords = {
         "romantic": ['love', 'pyaar', 'ishq', 'mohabbat', 'romantic', 'dil', 'sanam', 'tera', 'meri', 'heart'],
@@ -372,16 +433,19 @@ def filter_by_mood(videos: list, mood: str) -> list:
         "funk": ['funk', 'carioca', 'baile', 'mc ', 'beat'],
         "phonk": ['phonk', 'drift', 'cowbell', 'brazilian phonk', 'russian phonk']
     }
+    
     keywords = mood_keywords.get(mood, [])
     for video in videos:
         title = video.get("title", "").lower()
         if any(word in title for word in keywords):
             filtered.append(video)
+    
     return filtered if filtered else videos
 
 def filter_by_language(videos: list, lang: str) -> list:
     if lang == "auto" or not lang:
         return videos
+    
     filtered = []
     lang_keywords = {
         "hindi": ['hindi', 'bollywood'],
@@ -407,10 +471,12 @@ def filter_by_language(videos: list, lang: str) -> list:
         "russian": ['russian'],
         "chinese": ['chinese', 'mandopop']
     }
+    
     keywords = lang_keywords.get(lang, [])
     for video in videos:
         title = video.get("title", "").lower()
         channel = video.get("channel", "").lower()
+        
         if lang == "hindi":
             other_indian = ['punjabi', 'tamil', 'telugu', 'kannada', 'malayalam', 'bengali', 'marathi', 'gujarati', 'bhojpuri', 'haryanvi']
             if not any(word in title for word in other_indian) and not any(word in channel for word in other_indian):
@@ -418,6 +484,7 @@ def filter_by_language(videos: list, lang: str) -> list:
         else:
             if any(word in title for word in keywords) or any(word in channel for word in keywords):
                 filtered.append(video)
+    
     return filtered if filtered else videos
 
 # ==========================================
@@ -457,7 +524,7 @@ def is_bad_song(title: str, duration_sec: int) -> bool:
     return False
 
 # ==========================================
-# MAIN AUTOPLAY FUNCTION
+# MAIN AUTOPLAY FUNCTION (FIXED)
 # ==========================================
 async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUTOPLAY_BATCH_SIZE) -> int:
     if not seed_track or not await is_autoplay(chat_id): return 0
@@ -496,6 +563,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
         
         for channel_name in channels:
             if len(candidates) >= limit * 2: break
+            
             channel_key = f"{chat_id}_{channel_name}"
             start_index = CHANNEL_INDEX.get(channel_key, 0)
             
@@ -506,11 +574,15 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             filtered_videos = filter_by_language(filtered_videos, lang)
             LOGGER(__name__).info(f"[AutoPlay] After filter: {len(filtered_videos)} videos")
             
+            # Add videos starting from index
             for i, video in enumerate(filtered_videos[start_index:], start=start_index):
                 if len(candidates) >= limit * 2: break
+                
                 vid_id = video.get("id")
                 vid_title = video.get("title")
-                if not vid_id or vid_id in queued_vids: continue
+                
+                if not vid_id or vid_id in queued_vids:
+                    continue
                 
                 is_duplicate = False
                 for played in history:
@@ -519,12 +591,18 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                         break
                 
                 if not is_duplicate and not is_bad_song(vid_title, 0):
-                    candidates.append({"id": vid_id, "title": vid_title, "duration": 0})
+                    candidates.append({
+                        "id": vid_id,
+                        "title": vid_title,
+                        "duration": video.get("duration", 0)
+                    })
+                    LOGGER(__name__).info(f"[AutoPlay] Candidate added: {vid_title[:50]}")
             
             CHANNEL_INDEX[channel_key] = start_index + len(filtered_videos)
         
         LOGGER(__name__).info(f"[AutoPlay] Total candidates: {len(candidates)}")
         
+        # Fallback: Search if not enough
         if len(candidates) < 3:
             LOGGER(__name__).info(f"[AutoPlay] Fallback to search")
             search_query = f"{lang} {mood} songs"
@@ -537,13 +615,21 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                             is_dup = True
                             break
                     if not is_dup and not is_bad_song(result.get("title", ""), 0):
-                        candidates.append({"id": vidid, "title": result.get("title"), "duration": 0})
-            except: pass
+                        candidates.append({
+                            "id": vidid,
+                            "title": result.get("title"),
+                            "duration": 0
+                        })
+                        LOGGER(__name__).info(f"[AutoPlay] Fallback candidate: {result.get('title', '')[:50]}")
+            except Exception as e:
+                LOGGER(__name__).error(f"[AutoPlay] Search error: {e}")
         
         random.shuffle(candidates)
 
+        # Add to queue
         for candidate in candidates:
             if added >= limit: break
+            
             next_id = candidate.get("id")
             if not next_id or next_id in queued_vids: continue
             
@@ -558,14 +644,20 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 next_vidid = next_id
             
             if is_bad_song(title, duration_sec): continue
+            
             is_dup = False
             for played in history:
-                if is_same_song(played.get("title", ""), title): is_dup = True
-                break
+                if is_same_song(played.get("title", ""), title):
+                    is_dup = True
+                    break
             if is_dup: continue
             
             try:
-                await put_queue(chat_id, original_chat_id, f"vid_{next_vidid}", title, duration_min, "Autoplay", next_vidid, requester_id, streamtype)
+                await put_queue(
+                    chat_id, original_chat_id, f"vid_{next_vidid}",
+                    title, duration_min, "Autoplay", next_vidid,
+                    requester_id, streamtype,
+                )
                 history.append({"vidid": next_vidid, "title": title})
                 queued_vids.add(next_vidid)
                 added += 1
@@ -573,6 +665,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Queue error: {e}")
 
+        LOGGER(__name__).info(f"[AutoPlay] Total added: {added}")
         return added
     except Exception as e:
         LOGGER(__name__).error(f"[AutoPlay] Critical: {e}")
