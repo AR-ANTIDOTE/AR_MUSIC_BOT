@@ -12,53 +12,93 @@ AUTOPLAY_REFETCH_THRESHOLD = 3
 _autoplay_fetching = {}
 PLAYED_HISTORY = {}
 
-def get_language_query(lang: str, mood: str) -> list:
-    """Get search queries based on language and mood"""
+def detect_language_from_title(title: str) -> str:
+    """Detect language from song title"""
+    if not title:
+        return "hindi"
+    
+    title_lower = title.lower()
+    
+    # Punjabi keywords
+    punjabi_keywords = ['punjabi', 'jatt', 'sidhu', 'diljit', 'guru', 'randha', 'bhangra', 'munde', 'kudi', 'carry', 'brown']
+    if any(word in title_lower for word in punjabi_keywords):
+        return "punjabi"
+    
+    # English keywords
+    english_keywords = ['english', 'pop', 'rock', 'hip hop', 'rap', 'billboard', 'spotify', 'feat', 'remix']
+    if any(word in title_lower for word in english_keywords):
+        return "english"
+    
+    # Tamil keywords
+    tamil_keywords = ['tamil', 'kollywood', 'ar rahman', 'anirudh', 'yuvan']
+    if any(word in title_lower for word in tamil_keywords):
+        return "tamil"
+    
+    # Telugu keywords
+    telugu_keywords = ['telugu', 'tollywood', 'ss thaman', 'dsp']
+    if any(word in title_lower for word in telugu_keywords):
+        return "telugu"
+    
+    # Default to Hindi
+    return "hindi"
+
+def get_smart_search_queries(lang: str, mood: str, seed_title: str = "") -> list:
+    """
+    Generate smart search queries based on language, mood, and seed song
+    Returns list of queries to search
+    """
     queries = []
     
-    # Language-based base queries
-    if lang == "hindi":
-        base_queries = ["latest hindi songs 2024", "bollywood hits", "hindi romantic songs"]
-    elif lang == "punjabi":
-        base_queries = ["latest punjabi songs 2024", "punjabi hits", "punjabi party songs"]
-    elif lang == "english":
-        base_queries = ["latest english songs 2024", "pop hits", "english top charts"]
-    elif lang == "tamil":
-        base_queries = ["latest tamil songs 2024", "kollywood hits", "tamil romantic songs"]
-    elif lang == "telugu":
-        base_queries = ["latest telugu songs 2024", "tollywood hits", "telugu romantic songs"]
-    elif lang == "kannada":
-        base_queries = ["latest kannada songs 2024", "sandalwood hits"]
-    elif lang == "malayalam":
-        base_queries = ["latest malayalam songs 2024", "mollywood hits"]
-    elif lang == "bengali":
-        base_queries = ["latest bengali songs 2024", "bengali hits"]
-    elif lang == "marathi":
-        base_queries = ["latest marathi songs 2024", "marathi hits"]
-    elif lang == "gujarati":
-        base_queries = ["latest gujarati songs 2024", "gujarati hits"]
-    else:
-        base_queries = ["latest songs 2024", "trending music"]
+    # Language base queries
+    lang_queries = {
+        "hindi": ["latest hindi songs 2024", "bollywood hits 2024", "hindi romantic songs", "hindi party songs"],
+        "punjabi": ["latest punjabi songs 2024", "punjabi hits 2024", "punjabi party songs", "punjabi romantic"],
+        "english": ["latest english songs 2024", "pop hits 2024", "english top charts", "english romantic songs"],
+        "tamil": ["latest tamil songs 2024", "kollywood hits 2024", "tamil romantic songs", "tamil party songs"],
+        "telugu": ["latest telugu songs 2024", "tollywood hits 2024", "telugu romantic songs", "telugu party songs"],
+        "kannada": ["latest kannada songs 2024", "sandalwood hits"],
+        "malayalam": ["latest malayalam songs 2024", "mollywood hits"],
+        "bengali": ["latest bengali songs 2024", "bengali hits"],
+        "marathi": ["latest marathi songs 2024", "marathi hits"],
+        "gujarati": ["latest gujarati songs 2024", "gujarati hits"]
+    }
     
-    # Mood-based additional queries
-    if mood == "happy":
-        mood_queries = ["happy songs", "party songs", "upbeat songs", "dance songs"]
-    elif mood == "sad":
-        mood_queries = ["sad songs", "heartbreak songs", "emotional songs", "sad romantic"]
-    elif mood == "romantic":
-        mood_queries = ["romantic songs", "love songs", "romantic hits"]
-    elif mood == "workout":
-        mood_queries = ["workout songs", "gym songs", "high energy songs", "motivational songs"]
-    elif mood == "chill":
-        mood_queries = ["chill songs", "relaxing music", "lofi songs", "acoustic songs"]
-    elif mood == "bhajan":
-        mood_queries = ["bhajan", "devotional songs", "spiritual songs", "bhakti geet", "aarti"]
-    else:
-        mood_queries = []
+    # Mood queries
+    mood_queries = {
+        "happy": ["happy songs", "party songs", "upbeat songs", "dance songs", "celebration songs"],
+        "sad": ["sad songs", "heartbreak songs", "emotional songs", "sad romantic", "breakup songs"],
+        "romantic": ["romantic songs", "love songs", "romantic hits", "love ballads"],
+        "workout": ["workout songs", "gym songs", "high energy songs", "motivational songs", "pump up songs"],
+        "chill": ["chill songs", "relaxing music", "lofi songs", "acoustic songs", "peaceful songs"],
+        "bhajan": ["bhajan", "devotional songs", "spiritual songs", "bhakti geet", "aarti", "prayer songs"]
+    }
     
-    # Combine base + mood queries
-    queries = base_queries + mood_queries
-    return queries
+    # Get base queries for language
+    base_queries = lang_queries.get(lang, lang_queries["hindi"])
+    
+    # If mood is set, combine language + mood
+    if mood != "any" and mood in mood_queries:
+        mood_list = mood_queries[mood]
+        
+        # Create combined queries: "hindi sad songs", "english romantic songs"
+        for mood_q in mood_list[:3]:  # Top 3 mood queries
+            queries.append(f"{lang} {mood_q}")
+        
+        # Add pure mood queries
+        queries.extend(mood_list[:2])
+    
+    # Add base language queries
+    queries.extend(base_queries[:3])
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_queries = []
+    for q in queries:
+        if q not in seen:
+            seen.add(q)
+            unique_queries.append(q)
+    
+    return unique_queries
 
 def extract_song_name(title: str) -> str:
     """Extract ONLY the song name, removing movie/album name"""
@@ -150,11 +190,15 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
     
-    # GLOBAL FIX: Use related videos ONLY if BOTH language=auto AND mood=any
-    # Otherwise, completely skip related videos and use language/mood search
+    # If language is auto, detect from seed song
+    if lang == "auto" and seed_title:
+        lang = detect_language_from_title(seed_title)
+        LOGGER(__name__).info(f"[AutoPlay] Auto-detected language: {lang}")
+    
+    # Determine strategy
     use_related = (lang == "auto" and mood == "any")
     
-    LOGGER(__name__).info(f"[AutoPlay] Lang: {lang}, Mood: {mood}, Use Related: {use_related}")
+    LOGGER(__name__).info(f"[AutoPlay] Strategy - Language: {lang}, Mood: {mood}, Use Related: {use_related}")
     
     # Initialize history
     if chat_id not in PLAYED_HISTORY:
@@ -176,11 +220,11 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     try:
         candidates = []
         
-        # Method 1: Related videos - ONLY if language=auto AND mood=any
+        # Method 1: Get related streams from Piped API ONLY if language=auto AND mood=any
         if use_related and seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
             try:
                 related_list = await YouTube.get_related_streams(seed_video_id)
-                LOGGER(__name__).info(f"[AutoPlay] Got {len(related_list)} related")
+                LOGGER(__name__).info(f"[AutoPlay] Got {len(related_list)} related from Piped")
                 
                 for rel in related_list:
                     rel_id = rel.get("id")
@@ -210,35 +254,35 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Related error: {e}")
+
+        # Method 2: Smart search based on language and mood
+        search_queries = get_smart_search_queries(lang, mood, seed_title)
+        LOGGER(__name__).info(f"[AutoPlay] Search queries: {search_queries[:5]}")
         
-        # Method 2: Language + Mood search - ALWAYS if NOT using related
-        if not use_related:
-            search_queries = get_language_query(lang, mood)
-            LOGGER(__name__).info(f"[AutoPlay] Using lang/mood search: {search_queries[:3]}")
-            
-            for query in search_queries:
-                if len(candidates) >= limit * 2:
-                    break
+        for query in search_queries:
+            if len(candidates) >= limit * 2:
+                break
+                
+            try:
+                result, vidid = await YouTube.track(query)
+                
+                if result and vidid and vidid not in queued_vids:
+                    is_dup = False
+                    for played in history:
+                        if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
+                            is_dup = True
+                            break
                     
-                try:
-                    result, vidid = await YouTube.track(query)
-                    
-                    if result and vidid and vidid not in queued_vids:
-                        is_dup = False
-                        for played in history:
-                            if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
-                                is_dup = True
-                                break
+                    if not is_dup and not is_bad_song(result.get("title", ""), 0):
+                        candidates.append({
+                            "id": vidid,
+                            "title": result.get("title"),
+                            "duration": 0
+                        })
+                        LOGGER(__name__).info(f"[AutoPlay] Found: {result.get('title', '')[:40]}")
                         
-                        if not is_dup and not is_bad_song(result.get("title", ""), 0):
-                            candidates.append({
-                                "id": vidid,
-                                "title": result.get("title"),
-                                "duration": 0
-                            })
-                            
-                except Exception as e:
-                    LOGGER(__name__).error(f"[AutoPlay] Search error: {e}")
+            except Exception as e:
+                LOGGER(__name__).error(f"[AutoPlay] Search error for '{query}': {e}")
 
         LOGGER(__name__).info(f"[AutoPlay] Total candidates: {len(candidates)}")
         random.shuffle(candidates)
