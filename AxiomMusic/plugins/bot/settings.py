@@ -114,7 +114,7 @@ async def can_toggle_feature(chat_id: int, user_id: int) -> bool:
 
 
 def feature_markup(status: bool):
-    toggle_text = "🖼 ᴛʜᴜᴍʙɴᴀɪʟ : ᴏɴ" if status else "🖼 ᴛʜᴜᴍʙɴᴀɪʟ : ᴏғғ"
+    toggle_text = "🖼 ᴛʜᴜᴍʙɴᴀɪʟ | ᴏɴ" if status else "🖼 ᴛʜᴜᴍʙɴᴀɪʟ | ᴏғғ"
     toggle_state = "off" if status else "on"
 
     toggle_style = (
@@ -139,7 +139,7 @@ def feature_markup(status: bool):
 def thumbnail_panel_text(status: bool):
     current = "ᴇɴᴀʙᴇᴅ ✅" if status else "ᴅɪsᴀʙʟᴇᴅ ❌"
     return (
-        "<b>𝚻ʜ꧊‌𝛖ϻβηιℓ ᴇᴛᴛɴɢs</b>\n\n"
+        "<b>ᴛʜᴜᴍʙɴᴀɪʟ sᴇᴛᴛɴɢs</b>\n\n"
         f"<b>ᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs:</b> {current}\n\n"
         "<b>Quick use:</b> <code>/thumb on</code> | <code>/thumb off</code>"
     )
@@ -187,7 +187,7 @@ async def thumbnail_toggle_callback(_, callback_query: CallbackQuery):
     await thumb_on(chat_id) if enable else await thumb_off(chat_id)
     
     await callback_query.answer(
-        f"Thumbnail {'enabled ✅' if enable else 'disabled ❌'}",
+        f"🖼 ᴛʜᴜᴍʙɴᴀɪʟ | {'ᴇɴᴀʙᴇᴅ' if enable else 'ᴅɪsᴀʙʟᴇᴅ'}",
         show_alert=True,
     )
     await callback_query.edit_message_text(
