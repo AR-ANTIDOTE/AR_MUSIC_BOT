@@ -166,7 +166,7 @@ async def seek_forward_25_cb(client, callback_query: CallbackQuery):
 
     except Exception as e:
         print(f"Error in seek_forward_25_cb: {e}")
-        await callback_query.answer("<blockquote expandable><b>🚫 ғᴀɪʟᴇᴅ ᴛᴏ sᴇᴇᴋ ғᴏʀᴡᴀʀᴅ! ", show_alert=True)
+        await callback_query.answer("🚫 ғᴀɪʟᴇᴅ ᴛᴏ sᴇᴇᴋ ғᴏʀᴡᴀʀᴅ! ", show_alert=True)
 
 @app.on_callback_query(filters.regex("backward_25"))
 async def seek_backward_25_cb(client, callback_query: CallbackQuery):
