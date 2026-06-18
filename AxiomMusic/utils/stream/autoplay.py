@@ -150,10 +150,11 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
     
-    # Determine if we should use related videos or language/mood search
+    # GLOBAL FIX: Use related videos ONLY if BOTH language=auto AND mood=any
+    # Otherwise, completely skip related videos and use language/mood search
     use_related = (lang == "auto" and mood == "any")
     
-    LOGGER(__name__).info(f"[AutoPlay] Language: {lang}, Mood: {mood}, Use Related: {use_related}")
+    LOGGER(__name__).info(f"[AutoPlay] Lang: {lang}, Mood: {mood}, Use Related: {use_related}")
     
     # Initialize history
     if chat_id not in PLAYED_HISTORY:
@@ -175,11 +176,11 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     try:
         candidates = []
         
-        # Method 1: Get related streams from Piped API ONLY if language=auto AND mood=any
+        # Method 1: Related videos - ONLY if language=auto AND mood=any
         if use_related and seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
             try:
                 related_list = await YouTube.get_related_streams(seed_video_id)
-                LOGGER(__name__).info(f"[AutoPlay] Got {len(related_list)} related from Piped")
+                LOGGER(__name__).info(f"[AutoPlay] Got {len(related_list)} related")
                 
                 for rel in related_list:
                     rel_id = rel.get("id")
@@ -209,35 +210,35 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Related error: {e}")
-
-        # Method 2: Search based on language and mood (ALWAYS run if not using related)
-        search_queries = get_language_query(lang, mood)
-        LOGGER(__name__).info(f"[AutoPlay] Search queries: {search_queries}")
         
-        for query in search_queries:
-            if len(candidates) >= limit * 2:
-                break
-                
-            try:
-                result, vidid = await YouTube.track(query)
-                
-                if result and vidid and vidid not in queued_vids:
-                    is_dup = False
-                    for played in history:
-                        if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
-                            is_dup = True
-                            break
+        # Method 2: Language + Mood search - ALWAYS if NOT using related
+        if not use_related:
+            search_queries = get_language_query(lang, mood)
+            LOGGER(__name__).info(f"[AutoPlay] Using lang/mood search: {search_queries[:3]}")
+            
+            for query in search_queries:
+                if len(candidates) >= limit * 2:
+                    break
                     
-                    if not is_dup and not is_bad_song(result.get("title", ""), 0):
-                        candidates.append({
-                            "id": vidid,
-                            "title": result.get("title"),
-                            "duration": 0
-                        })
-                        LOGGER(__name__).info(f"[AutoPlay] Found: {result.get('title', '')[:40]}")
+                try:
+                    result, vidid = await YouTube.track(query)
+                    
+                    if result and vidid and vidid not in queued_vids:
+                        is_dup = False
+                        for played in history:
+                            if played.get("vidid") == vidid or is_same_song(played.get("title", ""), result.get("title", "")):
+                                is_dup = True
+                                break
                         
-            except Exception as e:
-                LOGGER(__name__).error(f"[AutoPlay] Search error: {e}")
+                        if not is_dup and not is_bad_song(result.get("title", ""), 0):
+                            candidates.append({
+                                "id": vidid,
+                                "title": result.get("title"),
+                                "duration": 0
+                            })
+                            
+                except Exception as e:
+                    LOGGER(__name__).error(f"[AutoPlay] Search error: {e}")
 
         LOGGER(__name__).info(f"[AutoPlay] Total candidates: {len(candidates)}")
         random.shuffle(candidates)
