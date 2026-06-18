@@ -4,7 +4,7 @@ import re
 import config
 from AxiomMusic import LOGGER, YouTube, app
 from AxiomMusic.misc import db
-from AxiomMusic.utils.database import is_autoplay
+from AxiomMusic.utils.database import is_autoplay, get_autoplay_lang, get_autoplay_mood
 from AxiomMusic.utils.stream.queue import put_queue
 
 AUTOPLAY_BATCH_SIZE = 10
@@ -12,29 +12,90 @@ AUTOPLAY_REFETCH_THRESHOLD = 3
 _autoplay_fetching = {}
 PLAYED_HISTORY = {}
 
+def detect_language(title: str) -> str:
+    """Detect song language from title"""
+    if not title:
+        return "hindi"
+    
+    title_lower = title.lower()
+    
+    # Punjabi keywords
+    punjabi_keywords = ['punjabi', 'jatt', 'sidhu', 'diljit', 'guru', 'randha', 'bhangra', 'munde', 'kudi']
+    if any(word in title_lower for word in punjabi_keywords):
+        return "punjabi"
+    
+    # English keywords
+    english_keywords = ['english', 'pop', 'rock', 'hip hop', 'rap', 'billboard', 'spotify']
+    if any(word in title_lower for word in english_keywords):
+        return "english"
+    
+    # Tamil keywords
+    tamil_keywords = ['tamil', 'kollywood', 'ar rahman', 'anirudh']
+    if any(word in title_lower for word in tamil_keywords):
+        return "tamil"
+    
+    # Telugu keywords
+    telugu_keywords = ['telugu', 'tollywood']
+    if any(word in title_lower for word in telugu_keywords):
+        return "telugu"
+    
+    # Default to Hindi
+    return "hindi"
+
+def get_language_query(lang: str, mood: str) -> list:
+    """Get search queries based on language and mood"""
+    queries = []
+    
+    if lang == "auto":
+        lang = "hindi"
+    
+    # Language-based queries
+    if lang == "hindi":
+        base_queries = ["latest hindi songs", "bollywood songs"]
+    elif lang == "punjabi":
+        base_queries = ["latest punjabi songs", "punjabi hits"]
+    elif lang == "english":
+        base_queries = ["latest english songs", "pop songs"]
+    elif lang == "tamil":
+        base_queries = ["latest tamil songs", "kollywood songs"]
+    elif lang == "telugu":
+        base_queries = ["latest telugu songs", "tollywood songs"]
+    else:
+        base_queries = ["latest songs"]
+    
+    # Mood-based queries
+    if mood == "happy":
+        mood_queries = ["happy songs", "upbeat songs", "party songs"]
+    elif mood == "sad":
+        mood_queries = ["sad songs", "heartbreak songs", "emotional songs"]
+    elif mood == "romantic":
+        mood_queries = ["romantic songs", "love songs"]
+    elif mood == "workout":
+        mood_queries = ["workout songs", "gym songs", "energy songs"]
+    elif mood == "chill":
+        mood_queries = ["chill songs", "relaxing songs", "lofi songs"]
+    elif mood == "bhajan":
+        mood_queries = ["bhajan", "devotional songs", "spiritual songs"]
+    else:
+        mood_queries = []
+    
+    queries = base_queries + mood_queries
+    return queries
+
 def extract_song_name(title: str) -> str:
-    """
-    Extract ONLY the song name, removing movie/album name and noise
-    Example: "Sanam Re Title Song | Pulkit Samrat" -> "title song"
-    Example: "Hua Hain Aaj Pehli Baar | SANAM RE" -> "hua hain aaj pehli baar"
-    """
+    """Extract ONLY the song name, removing movie/album name"""
     if not title:
         return ""
     
-    # Lowercase
     title = title.lower()
-    
-    # Remove brackets
     title = re.sub(r'\([^)]*\)', '', title)
     title = re.sub(r'\[[^\]]*\]', '', title)
     
-    # Split by common separators and take FIRST part (song name)
     for sep in [' | ', ' - ', ' by ', ' from ', ' ft. ', ' feat. ']:
         if sep in title:
             title = title.split(sep)[0]
             break
     
-    # Remove noise words
     noise = {
         'official', 'video', 'audio', 'full', 'song', 'title', 'hd', 
         '4k', '8k', '1080p', '720p', 'new', 'latest', 'lyrics', 
@@ -44,37 +105,29 @@ def extract_song_name(title: str) -> str:
     words = title.split()
     words = [w for w in words if w not in noise]
     
-    # Remove non-alphanumeric
     cleaned = ''.join(c for c in ' '.join(words) if c.isalnum() or c.isspace())
     cleaned = ' '.join(cleaned.split()).strip()
     
     return cleaned
 
 def is_same_song(title1: str, title2: str) -> bool:
-    """
-    Check if two titles are the same song by comparing extracted song names
-    """
+    """Check if two titles are the same song"""
     song1 = extract_song_name(title1)
     song2 = extract_song_name(title2)
     
     if not song1 or not song2:
         return False
     
-    # Exact match
     if song1 == song2:
         return True
     
-    # Word overlap check
     words1 = set(song1.split())
     words2 = set(song2.split())
     
     if not words1 or not words2:
         return False
     
-    # Common words
     common = words1 & words2
-    
-    # If 70% words match, it's the same song
     similarity = len(common) / min(len(words1), len(words2))
     return similarity >= 0.7
 
@@ -95,7 +148,6 @@ def is_bad_song(title: str, duration_sec: int) -> bool:
         if word in title_lower:
             return True
     
-    # Duration: 1.5 min to 15 min
     if duration_sec < 90 or duration_sec > 900:
         return True
     
@@ -106,7 +158,6 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
         return 0
         
     if _autoplay_fetching.get(chat_id):
-        LOGGER(__name__).info(f"[AutoPlay] Already fetching for {chat_id}")
         return 0
 
     _autoplay_fetching[chat_id] = True
@@ -116,6 +167,14 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     streamtype = seed_track.get("streamtype", "audio")
     seed_video_id = seed_track.get("vidid")
     seed_title = seed_track.get("title", "")
+    
+    # Get language and mood
+    lang = await get_autoplay_lang(chat_id)
+    mood = await get_autoplay_mood(chat_id)
+    
+    # Auto-detect language if set to auto
+    if lang == "auto" and seed_title:
+        lang = detect_language(seed_title)
     
     # Initialize history
     if chat_id not in PLAYED_HISTORY:
@@ -127,15 +186,12 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
     if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
         history.append({
             "vidid": seed_video_id,
-            "title": seed_title,
-            "song_name": extract_song_name(seed_title)
+            "title": seed_title
         })
     
     # Get current queue
     current_queue = db.get(chat_id, [])
     queued_vids = {item.get("vidid") for item in current_queue if item.get("vidid")}
-    
-    LOGGER(__name__).info(f"[AutoPlay] Queue={len(current_queue)}, History={len(history)}")
 
     try:
         candidates = []
@@ -144,32 +200,22 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
         if seed_video_id and seed_video_id not in ["telegram", "soundcloud"]:
             try:
                 related_list = await YouTube.get_related_streams(seed_video_id)
-                LOGGER(__name__).info(f"[AutoPlay] Got {len(related_list)} related from Piped")
                 
                 for rel in related_list:
                     rel_id = rel.get("id")
                     rel_title = rel.get("title", "")
                     rel_dur = rel.get("duration", 0)
                     
-                    if not rel_id:
-                        continue
-                    
-                    if rel_id in queued_vids:
+                    if not rel_id or rel_id in queued_vids:
                         continue
                     
                     if is_bad_song(rel_title, rel_dur):
-                        LOGGER(__name__).info(f"[AutoPlay] Rejected (bad): {rel_title[:50]}")
                         continue
                     
-                    # Check if same song
                     is_duplicate = False
                     for played in history:
-                        if played.get("vidid") == rel_id:
+                        if played.get("vidid") == rel_id or is_same_song(played.get("title", ""), rel_title):
                             is_duplicate = True
-                            break
-                        if is_same_song(played.get("title", ""), rel_title):
-                            is_duplicate = True
-                            LOGGER(__name__).info(f"[AutoPlay] REJECTED (same as {played.get('title', '')[:30]}): {rel_title[:50]}")
                             break
                     
                     if is_duplicate:
@@ -178,27 +224,15 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                     candidates.append({
                         "id": rel_id,
                         "title": rel_title,
-                        "duration": rel_dur,
-                        "source": "related"
+                        "duration": rel_dur
                     })
-                    LOGGER(__name__).info(f"[AutoPlay] ✓ Candidate: {rel_title[:50]}")
                     
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Related error: {e}")
 
-        # Method 2: Fallback search
-        if len(candidates) < limit and seed_title:
-            song_name = extract_song_name(seed_title)
-            
-            search_queries = []
-            if song_name:
-                words = song_name.split()[:3]
-                if words:
-                    main_query = ' '.join(words)
-                    search_queries = [
-                        main_query,
-                        f"{main_query} song",
-                    ]
+        # Method 2: Search based on language and mood
+        if len(candidates) < limit:
+            search_queries = get_language_query(lang, mood)
             
             for query in search_queries:
                 if len(candidates) >= limit * 2:
@@ -218,15 +252,12 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                             candidates.append({
                                 "id": vidid,
                                 "title": result.get("title"),
-                                "duration": 0,
-                                "source": "search"
+                                "duration": 0
                             })
-                            LOGGER(__name__).info(f"[AutoPlay] Found via search: {result.get('title', '')[:40]}")
                             
                 except Exception as e:
                     LOGGER(__name__).error(f"[AutoPlay] Search error: {e}")
 
-        LOGGER(__name__).info(f"[AutoPlay] Total valid candidates: {len(candidates)}")
         random.shuffle(candidates)
 
         # Add to queue
@@ -277,27 +308,15 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 
                 history.append({
                     "vidid": next_vidid,
-                    "title": title,
-                    "song_name": extract_song_name(title)
+                    "title": title
                 })
                 queued_vids.add(next_vidid)
                 added += 1
                 
-                LOGGER(__name__).info(f"[AutoPlay] ✓ ADDED: {title[:50]}")
-                
             except Exception as e:
                 LOGGER(__name__).error(f"[AutoPlay] Queue error: {e}")
 
-        if added > 0:
-            try:
-                await app.send_message(
-                    original_chat_id,
-                    f"<b>♬ Autoplay added {added} fresh song(s)</b>"
-                )
-            except:
-                pass
-        
-        LOGGER(__name__).info(f"[AutoPlay] Total added: {added}")
+        # NO MESSAGE - Silent autoplay
         return added
         
     except Exception as e:
@@ -313,5 +332,4 @@ async def maybe_refetch_autoplay(chat_id: int, seed_track: dict):
     current_queue = len(db.get(chat_id, []))
     
     if current_queue <= AUTOPLAY_REFETCH_THRESHOLD:
-        LOGGER(__name__).info(f"[AutoPlay] Trigger - Queue: {current_queue}/{AUTOPLAY_REFETCH_THRESHOLD}")
         asyncio.create_task(queue_autoplay_tracks(chat_id, seed_track))
