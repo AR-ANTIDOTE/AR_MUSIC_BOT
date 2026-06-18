@@ -1,6 +1,6 @@
 import re
 from pyrogram import filters
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from AxiomMusic import app
@@ -62,10 +62,10 @@ def autoplay_markup(status: bool):
         button_text = convert_to_special_font("DISABLED ❌")
         toggle_state = "on"
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}")],
+        [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}", style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER)],
         [
-            InlineKeyboardButton(convert_to_special_font("Lang."), callback_data="autoplay_lang"),
-            InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood")
+            InlineKeyboardButton(convert_to_special_font("Lang."), callback_data="autoplay_lang", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood", style=ButtonStyle.PRIMARY)
         ],
     ])
 
@@ -74,12 +74,12 @@ def language_markup(current_lang: str):
     row = []
     for lang_code, lang_name in LANGUAGES.items():
         display_name = f"✅ {lang_name}" if lang_code == current_lang else lang_name
-        row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setlang|{lang_code}"))
+        row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setlang|{lang_code}", style=(ButtonStyle.SUCCESS if lang_code == current_lang else ButtonStyle.DANGER)))
         if len(row) == 4:
             buttons.append(row)
             row = []
     if row: buttons.append(row)
-    buttons.append([InlineKeyboardButton(convert_to_special_font("Back"), callback_data="autoplay_back")])
+    buttons.append([InlineKeyboardButton(convert_to_special_font("Back"), callback_data="autoplay_back", style=ButtonStyle.PRIMARY)])
     return InlineKeyboardMarkup(buttons)
 
 def mood_markup(current_mood: str):
@@ -87,20 +87,20 @@ def mood_markup(current_mood: str):
     row = []
     for mood_code, mood_name in MOODS.items():
         display_name = f"✅ {mood_name}" if mood_code == current_mood else mood_name
-        row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setmood|{mood_code}"))
+        row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setmood|{mood_code}", style=(ButtonStyle.SUCCESS if mood_code == current_mood else ButtonStyle.DANGER)))
         if len(row) == 3:
             buttons.append(row)
             row = []
     if row: buttons.append(row)
-    buttons.append([InlineKeyboardButton(convert_to_special_font("Back"), callback_data="autoplay_back")])
+    buttons.append([InlineKeyboardButton(convert_to_special_font("Back"), callback_data="autoplay_back", style=ButtonStyle.PRIMARY)])
     return InlineKeyboardMarkup(buttons)
 
 def autoplay_text(status: bool, lang: str, mood: str):
-    current = convert_to_special_font("ENABLED ✅") if status else convert_to_special_font("DISABLED ❌")
+    current = convert_to_special_font("Enabled ✅") if status else convert_to_special_font("Disabled ❌")
     lang_name = LANGUAGES.get(lang, "Auto Detect")
     mood_name = MOODS.get(mood, "Any Mood")
     return (
-        f"<b>{convert_to_special_font('AUTOPLAY SETTINGS')}</b>\n\n"
+        f"<b>{convert_to_special_font('Autoplay Settings')}</b>\n\n"
         f"<b>{convert_to_special_font('Status:')}</b> {current}\n"
         f"<b>{convert_to_special_font('Language:')}</b> {convert_to_special_font(lang_name)}\n"
         f"<b>{convert_to_special_font('Mood:')}</b> {convert_to_special_font(mood_name)}\n\n"
