@@ -6,7 +6,7 @@
 
 import re
 from pyrogram import filters
-from pyrogram.enums import ChatMemberStatus
+from pyrogram.enums import ChatMemberStatus, ButtonStyle
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from AxiomMusic import app
@@ -69,6 +69,7 @@ def autoplay_markup(status: bool):
                 InlineKeyboardButton(
                     button_text,
                     callback_data=f"autoplay_toggle|{toggle_state}",
+                    style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER,
                 )
             ]
         ]
