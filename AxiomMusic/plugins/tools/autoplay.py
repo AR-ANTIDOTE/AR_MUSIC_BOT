@@ -25,11 +25,6 @@ ON_STATES = {"on", "enable", "enabled"}
 OFF_STATES = {"off", "disable", "disabled"}
 
 
-def autoplay_filter(_, __, message: Message):
-    text = message.text or message.caption or ""
-    return bool(AUTOPLAY_RE.match(text.strip()))
-
-
 def parse_autoplay_state(message: Message):
     text = (message.text or message.caption or "").strip()
     match = AUTOPLAY_RE.match(text)
@@ -60,17 +55,22 @@ async def can_toggle_autoplay(chat_id: int, user_id: int) -> bool:
 
 
 def autoplay_markup(status: bool):
-    toggle_text = "ᴛᴜʀɴ ᴏғғ ❌" if status else "ᴛᴜʀɴ ᴏɴ ✅"
-    toggle_state = "off" if status else "on"
+    # Green button when ON, Red button when OFF
+    if status:
+        button_text = "✅ ᴇɴᴀʙʟᴇᴅ"
+        toggle_state = "off"  # Click to turn off
+    else:
+        button_text = "❌ ᴅɪsᴀʙʟᴇᴅ"
+        toggle_state = "on"  # Click to turn on
+
     return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    toggle_text,
+                    button_text,
                     callback_data=f"autoplay_toggle|{toggle_state}",
                 )
-            ],
-            [InlineKeyboardButton("⋞ ᴄʟᴏsє ⋟", callback_data="close")],
+            ]
         ]
     )
 
@@ -85,7 +85,7 @@ def autoplay_text(status: bool):
     )
 
 
-@app.on_message(filters.command(["autoplay", "aplay", "ap"], prefixes=["/", "!", ".", ""]) & filters.group & ~BANNED_USERS)
+@app.on_message(filters.command(["autoplay", "aplay", "ap"], prefixes=["/", "!", "."]) & filters.group & ~BANNED_USERS)
 @AdminActual
 async def autoplay_command(_, message: Message, __):
     if not message.from_user:
