@@ -56,10 +56,10 @@ async def can_toggle_autoplay(chat_id: int, user_id: int) -> bool:
 
 def autoplay_markup(status: bool):
     if status:
-        button_text = convert_to_special_font("ENABLED ✅")
+        button_text = convert_to_special_font("Enabled ✅")
         toggle_state = "off"
     else:
-        button_text = convert_to_special_font("DISABLED ❌")
+        button_text = convert_to_special_font("Disabled ❌")
         toggle_state = "on"
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}", style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER)],
