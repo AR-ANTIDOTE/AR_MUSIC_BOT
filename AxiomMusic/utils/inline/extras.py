@@ -29,6 +29,7 @@ def botplaylist_markup(_):
         [
             InlineKeyboardButton(text=_["S_B_6"], url=SUPPORT_CHAT, style=random_style()),
             InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close", style=ButtonStyle.DANGER),
+        ],
     ]
     return buttons
 
