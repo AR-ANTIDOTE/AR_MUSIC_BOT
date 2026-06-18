@@ -63,8 +63,10 @@ def autoplay_markup(status: bool):
         toggle_state = "on"
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}")],
-        [InlineKeyboardButton(convert_to_special_font("Language"), callback_data="autoplay_lang")],
-        [InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood")]
+        [
+            InlineKeyboardButton(convert_to_special_font("Lang."), callback_data="autoplay_lang"),
+            InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood")
+        ],
     ])
 
 def language_markup(current_lang: str):
@@ -73,7 +75,7 @@ def language_markup(current_lang: str):
     for lang_code, lang_name in LANGUAGES.items():
         display_name = f"✅ {lang_name}" if lang_code == current_lang else lang_name
         row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setlang|{lang_code}"))
-        if len(row) == 2:
+        if len(row) == 4:
             buttons.append(row)
             row = []
     if row: buttons.append(row)
@@ -86,7 +88,7 @@ def mood_markup(current_mood: str):
     for mood_code, mood_name in MOODS.items():
         display_name = f"✅ {mood_name}" if mood_code == current_mood else mood_name
         row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setmood|{mood_code}"))
-        if len(row) == 2:
+        if len(row) == 3:
             buttons.append(row)
             row = []
     if row: buttons.append(row)
@@ -105,7 +107,7 @@ def autoplay_text(status: bool, lang: str, mood: str):
         f"<b>{convert_to_special_font('Commands:')}</b> <code>/autoplay on</code> | <code>/autoplay off</code>"
     )
 
-@app.on_message(filters.command(["autoplay", "aplay", "ap"], prefixes=["/", "!", "."]) & filters.group & ~BANNED_USERS)
+@app.on_message(filters.command(["autop", "autoplay", "aplay", "ap"], prefixes=["", "/", "!", "."]) & filters.group & ~BANNED_USERS)
 @AdminActual
 async def autoplay_command(_, message: Message, __):
     if not message.from_user: return await message.reply_text(convert_to_special_font("Please use this command from a user account."))
