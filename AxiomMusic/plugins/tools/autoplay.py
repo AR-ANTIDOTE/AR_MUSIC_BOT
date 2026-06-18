@@ -135,11 +135,11 @@ async def autoplay_callback(_, callback_query: CallbackQuery, __):
     if state == "on":
         await autoplay_on(chat_id)
         status = True
-        alert = convert_to_special_font("Autoplay enabled successfully.")
+        alert = convert_to_special_font("♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ")
     else:
         await autoplay_off(chat_id)
         status = False
-        alert = convert_to_special_font("Autoplay disabled successfully.")
+        alert = convert_to_special_font("♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ")
     await callback_query.answer(alert, show_alert=True)
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
