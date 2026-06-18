@@ -523,6 +523,32 @@ def is_bad_song(title: str, duration_sec: int) -> bool:
     if duration_sec < 90 or duration_sec > 900: return True
     return False
 
+def duration_to_seconds(duration):
+    if not duration:
+        return 180
+
+    if isinstance(duration, int):
+        return duration
+
+    try:
+        parts = [int(x) for x in str(duration).split(":")]
+
+        if len(parts) == 3:
+            h, m, s = parts
+            return h * 3600 + m * 60 + s
+
+        if len(parts) == 2:
+            m, s = parts
+            return m * 60 + s
+
+        if len(parts) == 1:
+            return parts[0]
+
+    except:
+        pass
+
+    return 180
+    
 # ==========================================
 # MAIN AUTOPLAY FUNCTION (FIXED)
 # ==========================================
@@ -561,7 +587,9 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
         
         # Fallback to "any" mood if specific mood has no channels
         if not channels:
-            channels = GLOBAL_MUSIC_DATABASE.get(lang, {}).get("any", [])
+            channels = []
+            for mood_list in GLOBAL_MUSIC_DATABASE.get(lang, {}).values():
+                channels.extend(mood_list)
             LOGGER(__name__).info(f"[AutoPlay] No channels for {lang}/{mood}, using 'any' mood")
         
         # Fallback to Hindi if language has no channels
@@ -590,7 +618,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 
                 vid_id = video.get("id")
                 vid_title = video.get("title")
-                vid_duration = video.get("duration", 0)
+                vid_duration = duration_to_seconds(video.get("duration"))
                 
                 if not vid_id:
                     LOGGER(__name__).warning(f"[AutoPlay] No video ID found")
@@ -622,7 +650,7 @@ async def queue_autoplay_tracks(chat_id: int, seed_track: dict, limit: int = AUT
                 candidates.append({
                     "id": vid_id,
                     "title": vid_title,
-                    "duration": vid_duration if vid_duration else 180
+                    "duration": vid_duration
                 })
                 LOGGER(__name__).info(f"[AutoPlay] ✓ Candidate added: {vid_title[:50]}")
             
