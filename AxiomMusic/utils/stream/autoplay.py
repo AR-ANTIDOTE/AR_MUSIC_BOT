@@ -1514,9 +1514,9 @@ def is_same_song(title1: str, title2: str) -> bool:
     similarity = len(common) / min(len(words1), len(words2))
     return similarity >= 0.7
 
-    def is_bad_song(title: str, duration_sec: int) -> bool:
-        if not title:
-            return True
+def is_bad_song(title: str, duration_sec: int) -> bool:
+    if not title:
+        return True
     
     title_lower = title.lower().strip()
     
