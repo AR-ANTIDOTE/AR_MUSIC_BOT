@@ -133,7 +133,7 @@ async def close_menu(_, query: CallbackQuery):
         await query.answer()
         await query.message.delete()
         ufff = await query.message.reply_text(
-            f"<blockquote expandable><b>✧ ᴄʟᴏꜱᴇ ʙʏ : {query.from_user.mention} </b></blockquote>"
+            f"<b>✧ ᴄʟᴏꜱᴇ ʙʏ : {query.from_user.mention} </b>"
         )
         await asyncio.sleep(2)
         await ufff.delete()
