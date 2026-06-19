@@ -56,10 +56,10 @@ async def can_toggle_autoplay(chat_id: int, user_id: int) -> bool:
 
 def autoplay_markup(status: bool):
     if status:
-        button_text = "♬ ᴀᴜᴛᴏᴘʟʏ | ᴏɴ"
+        button_text = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ"
         toggle_state = "off"
     else:
-        button_text = "♬ ᴀᴛᴏᴘʟᴀʏ | ᴏғғ"
+        button_text = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
         toggle_state = "on"
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}", style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER)],
@@ -135,11 +135,11 @@ async def autoplay_callback(_, callback_query: CallbackQuery, __):
     if state == "on":
         await autoplay_on(chat_id)
         status = True
-        alert = "♬ ᴀᴜᴛᴏᴘʟʏ | ᴏɴ"
+        alert = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ"
     else:
         await autoplay_off(chat_id)
         status = False
-        alert = "♬ ᴀᴜᴛᴏᴘʟʏ | ᴏғғ"
+        alert = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
     await callback_query.answer(alert, show_alert=True)
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
@@ -158,10 +158,10 @@ async def autoplay_set_language(_, callback_query: CallbackQuery, __):
     lang = callback_query.data.split("|", 1)[1]
     chat_id = callback_query.message.chat.id
     await set_autoplay_lang(chat_id, lang)
-    await callback_query.answer(f"Language set to {LANGUAGES[lang]}", show_alert=True)
-    status = await is_autoplay(chat_id)
-    mood = await get_autoplay_mood(chat_id)
-    await callback_query.edit_message_text(autoplay_text(status, lang, mood), reply_markup=autoplay_markup(status), disable_web_page_preview=True)
+    await callback_query.answer(f"Language set to {LANGUAGES[lang]}", show_alert=False)
+    
+    # STAY ON LANGUAGE SELECTION PAGE - Don't go back to main settings
+    await callback_query.edit_message_reply_markup(reply_markup=language_markup(lang))
 
 @app.on_callback_query(filters.regex(r"^autoplay_mood$") & ~BANNED_USERS)
 @ActualAdminCB
@@ -176,10 +176,10 @@ async def autoplay_set_mood(_, callback_query: CallbackQuery, __):
     mood = callback_query.data.split("|", 1)[1]
     chat_id = callback_query.message.chat.id
     await set_autoplay_mood(chat_id, mood)
-    await callback_query.answer(f"Mood set to {MOODS[mood]}", show_alert=True)
-    status = await is_autoplay(chat_id)
-    lang = await get_autoplay_lang(chat_id)
-    await callback_query.edit_message_text(autoplay_text(status, lang, mood), reply_markup=autoplay_markup(status), disable_web_page_preview=True)
+    await callback_query.answer(f"Mood set to {MOODS[mood]}", show_alert=False)
+    
+    # STAY ON MOOD SELECTION PAGE - Don't go back to main settings
+    await callback_query.edit_message_reply_markup(reply_markup=mood_markup(mood))
 
 @app.on_callback_query(filters.regex(r"^autoplay_back$") & ~BANNED_USERS)
 @ActualAdminCB
