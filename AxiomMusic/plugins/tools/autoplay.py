@@ -234,5 +234,8 @@ async def autoplay_from_player_callback(_, callback_query: CallbackQuery, __):
 @app.on_callback_query(filters.regex(r"^back_to_player$") & ~BANNED_USERS)
 @ActualAdminCB
 async def back_to_player(_, callback_query: CallbackQuery, __):
-    # Just delete the autoplay settings message
-    await callback_query.message.delete()
+    # Just close the autoplay settings
+    try:
+        await callback_query.message.delete()
+    except:
+        await callback_query.answer("Back to player", show_alert=False)
