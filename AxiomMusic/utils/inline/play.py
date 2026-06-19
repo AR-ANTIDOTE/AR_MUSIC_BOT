@@ -124,31 +124,29 @@ def stream_markup_timer(_, chat_id, played, dur):
     autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
     
     buttons = [
-        # [
-        #     InlineKeyboardButton(
-        #         text=f"{played} {bar} {dur}",
-        #         url=f"https://t.me/{app.username}?startgroup=true",
-        #         style=bar_style,
-        #     )
-        # ],
         [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
-            # InlineKeyboardButton(text="II", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
+            InlineKeyboardButton(
+                text=f"{played} {bar} {dur}",
+                url=f"https://t.me/{app.username}?startgroup=true",
+                style=bar_style,
+            )
+        ],
+        [
+            InlineKeyboardButton(text="II", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
             InlineKeyboardButton(text="▷", callback_data=f"ADMIN Pause|{chat_id}", style=random_style()),
             InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
             InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=random_style()),
-            # InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=random_style()),
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
+            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=random_style()),
         ],
         [
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style),
             InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_inline_config|{chat_id}", style=autoplay_style),
         ],
-        # [
-        #     # InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
-        #     # InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
-        #     # InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
-        # ]
+        [
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
+        ]
     ]
     return buttons
 
