@@ -34,7 +34,7 @@ def random_style():
 async def auto_button_animation(message, chat_id, get_keyboard_func):
     while True:
         try:
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
             # Skip if this is an autoplay settings message
             try:
