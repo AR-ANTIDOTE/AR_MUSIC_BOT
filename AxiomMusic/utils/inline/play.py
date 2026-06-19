@@ -37,8 +37,13 @@ async def auto_button_animation(message, chat_id, get_keyboard_func):
             await asyncio.sleep(5)
 
             # Skip if this is an autoplay settings message
-            if message.reply_markup and "ᴀᴜᴛᴏᴘʟᴀʏ" in str(message.reply_markup):
-                continue
+            try:
+                if message.reply_markup:
+                    markup_str = str(message.reply_markup)
+                    if "autoplay" in markup_str.lower() or "ᴀᴜᴛᴏᴘʟᴀʏ" in markup_str:
+                        continue  # Skip autoplay settings
+            except:
+                pass
 
             markup = InlineKeyboardMarkup(
                 get_keyboard_func(chat_id)
