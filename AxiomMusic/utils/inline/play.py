@@ -153,7 +153,7 @@ def stream_markup_timer(_, chat_id, played, dur):
         ],
         [
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style),
-            InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_inline_config|{chat_id}", style=autoplay_style),
+            InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_from_player|{chat_id}", style=autoplay_style),
         ],
         # [
         #     InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
@@ -199,7 +199,7 @@ def stream_markup(_, chat_id):
         ],
         [
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style),
-            InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_inline_config|{chat_id}", style=autoplay_style),
+            InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_from_player|{chat_id}", style=autoplay_style),
         ],
         [
             InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
