@@ -30,29 +30,6 @@ def random_style():
         ButtonStyle.DANGER,
         ButtonStyle.PRIMARY
     ])
-
-# async def auto_button_animation(message, chat_id, get_keyboard_func):
-#     while True:
-#         try:
-#             await asyncio.sleep(5)
-
-#             # Skip if this is an autoplay settings message
-#             try:
-#                 if message.reply_markup:
-#                     markup_str = str(message.reply_markup)
-#                     if "autoplay" in markup_str.lower() or "ᴀᴜᴛᴏᴘʟᴀʏ" in markup_str:
-#                         continue  # Skip autoplay settings
-#             except:
-#                 pass
-
-#             markup = InlineKeyboardMarkup(
-#                 get_keyboard_func(chat_id)
-#             )
-
-#             await message.edit_reply_markup(reply_markup=markup)
-
-#         except Exception:
-#             break
             
 def track_markup(_, videoid, user_id, channel, fplay):
     buttons = [
