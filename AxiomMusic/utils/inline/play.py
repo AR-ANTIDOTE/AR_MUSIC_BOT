@@ -17,7 +17,7 @@ import random
 import asyncio
 import math
 import config
-from pyrogram.types import InlineKeyboardButton
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from AxiomMusic.utils.formatters import time_to_seconds
 from AxiomMusic import app
 from pyrogram.enums import ButtonStyle
