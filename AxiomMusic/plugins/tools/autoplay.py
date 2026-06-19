@@ -204,3 +204,35 @@ async def autoplay_inline_config(_, callback_query: CallbackQuery, __):
         reply_markup=autoplay_markup(status),
         disable_web_page_preview=True,
     )
+
+@app.on_callback_query(filters.regex(r"^autoplay_from_player\|(.+)$") & ~BANNED_USERS)
+@ActualAdminCB
+async def autoplay_from_player_callback(_, callback_query: CallbackQuery, __):
+    chat_id = int(callback_query.data.split("|", 1)[1])
+    status = await is_autoplay(chat_id)
+    lang = await get_autoplay_lang(chat_id)
+    mood = await get_autoplay_mood(chat_id)
+    
+    # Add back button
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton(convert_to_special_font("♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ" if status else "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"), 
+         callback_data=f"autoplay_toggle|{'off' if status else 'on'}", 
+         style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER)],
+        [
+            InlineKeyboardButton(convert_to_special_font("Lang."), callback_data="autoplay_lang", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood", style=ButtonStyle.PRIMARY)
+        ],
+        [InlineKeyboardButton(convert_to_special_font("« Back to Player"), callback_data="back_to_player", style=ButtonStyle.DANGER)],
+    ])
+    
+    await callback_query.edit_message_text(
+        autoplay_text(status, lang, mood),
+        reply_markup=markup,
+        disable_web_page_preview=True,
+    )
+
+@app.on_callback_query(filters.regex(r"^back_to_player$") & ~BANNED_USERS)
+@ActualAdminCB
+async def back_to_player(_, callback_query: CallbackQuery, __):
+    # Just delete the autoplay settings message
+    await callback_query.message.delete()
