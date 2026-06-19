@@ -56,16 +56,16 @@ async def can_toggle_autoplay(chat_id: int, user_id: int) -> bool:
 
 def autoplay_markup(status: bool):
     if status:
-        button_text = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ"
+        button_text = convert_to_special_font("♬ Autoplay | On")
         toggle_state = "off"
     else:
-        button_text = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
+        button_text = convert_to_special_font("♬ Autoplay | Off")
         toggle_state = "on"
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(button_text, callback_data=f"autoplay_toggle|{toggle_state}", style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER)],
         [
-            InlineKeyboardButton("Lang.", callback_data="autoplay_lang", style=ButtonStyle.PRIMARY),
-            InlineKeyboardButton("Mood", callback_data="autoplay_mood", style=ButtonStyle.PRIMARY)
+            InlineKeyboardButton(convert_to_special_font("Lang."), callback_data="autoplay_lang", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood", style=ButtonStyle.PRIMARY)
         ],
     ])
 
@@ -74,12 +74,12 @@ def language_markup(current_lang: str):
     row = []
     for lang_code, lang_name in LANGUAGES.items():
         display_name = f"✅ {lang_name}" if lang_code == current_lang else lang_name
-        row.append(InlineKeyboardButton(display_name, callback_data=f"autoplay_setlang|{lang_code}", style=(ButtonStyle.SUCCESS if lang_code == current_lang else ButtonStyle.DANGER)))
+        row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setlang|{lang_code}", style=(ButtonStyle.SUCCESS if lang_code == current_lang else ButtonStyle.DANGER)))
         if len(row) == 4:
             buttons.append(row)
             row = []
     if row: buttons.append(row)
-    buttons.append([InlineKeyboardButton("« Back", callback_data="autoplay_back", style=ButtonStyle.PRIMARY)])
+    buttons.append([InlineKeyboardButton(convert_to_special_font("« Back"), callback_data="autoplay_back", style=ButtonStyle.PRIMARY)])
     return InlineKeyboardMarkup(buttons)
 
 def mood_markup(current_mood: str):
@@ -87,35 +87,35 @@ def mood_markup(current_mood: str):
     row = []
     for mood_code, mood_name in MOODS.items():
         display_name = f"✅ {mood_name}" if mood_code == current_mood else mood_name
-        row.append(InlineKeyboardButton(display_name, callback_data=f"autoplay_setmood|{mood_code}", style=(ButtonStyle.SUCCESS if mood_code == current_mood else ButtonStyle.DANGER)))
+        row.append(InlineKeyboardButton(convert_to_special_font(display_name), callback_data=f"autoplay_setmood|{mood_code}", style=(ButtonStyle.SUCCESS if mood_code == current_mood else ButtonStyle.DANGER)))
         if len(row) == 3:
             buttons.append(row)
             row = []
     if row: buttons.append(row)
-    buttons.append([InlineKeyboardButton("« Back", callback_data="autoplay_back", style=ButtonStyle.PRIMARY)])
+    buttons.append([InlineKeyboardButton(convert_to_special_font("« Back"), callback_data="autoplay_back", style=ButtonStyle.PRIMARY)])
     return InlineKeyboardMarkup(buttons)
 
 def autoplay_text(status: bool, lang: str, mood: str):
-    current = "Enabled ✅" if status else "Disabled ❌"
+    current = convert_to_special_font("Enabled ✅") if status else convert_to_special_font("Disabled ❌")
     lang_name = LANGUAGES.get(lang, "Auto Detect")
     mood_name = MOODS.get(mood, "Any Mood")
     return (
-        f"<b>Autoplay Settings</b>\n\n"
-        f"<b>Status:</b> {current}\n"
-        f"<b>Language:</b> {lang_name}\n"
-        f"<b>Mood:</b> {mood_name}\n\n"
-        f"<b>Commands:</b> <code>/autoplay on</code> | <code>/autoplay off</code>"
+        f"<b>{convert_to_special_font('Autoplay Settings')}</b>\n\n"
+        f"<b>{convert_to_special_font('Status:')}</b> {current}\n"
+        f"<b>{convert_to_special_font('Language:')}</b> {convert_to_special_font(lang_name)}\n"
+        f"<b>{convert_to_special_font('Mood:')}</b> {convert_to_special_font(mood_name)}\n\n"
+        f"<b>{convert_to_special_font('Commands:')}</b> <code>/autoplay on</code> | <code>/autoplay off</code>"
     )
 
 @app.on_message(filters.command(["autop", "autoplay", "aplay", "ap"], prefixes=["", "/", "!", "."]) & filters.group & ~BANNED_USERS)
 @AdminActual
 async def autoplay_command(_, message: Message, __):
-    if not message.from_user: return await message.reply_text("Please use this command from a user account.")
+    if not message.from_user: return await message.reply_text(convert_to_special_font("Please use this command from a user account."))
     chat_id = message.chat.id
     requested_state = parse_autoplay_state(message)
     if requested_state in ON_STATES | OFF_STATES:
         if not await can_toggle_autoplay(chat_id, message.from_user.id):
-            return await message.reply_text("Only admins can change autoplay mode.")
+            return await message.reply_text(convert_to_special_font("Only admins can change autoplay mode."))
         status = requested_state in ON_STATES
         if status:
             await autoplay_on(chat_id)
@@ -135,11 +135,11 @@ async def autoplay_callback(_, callback_query: CallbackQuery, __):
     if state == "on":
         await autoplay_on(chat_id)
         status = True
-        alert = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ"
+        alert = convert_to_special_font("♬ Autoplay | On")
     else:
         await autoplay_off(chat_id)
         status = False
-        alert = "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
+        alert = convert_to_special_font("♬ Autoplay | Off")
     await callback_query.answer(alert, show_alert=True)
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
@@ -150,7 +150,11 @@ async def autoplay_callback(_, callback_query: CallbackQuery, __):
 async def autoplay_lang_menu(_, callback_query: CallbackQuery, __):
     chat_id = callback_query.message.chat.id
     current_lang = await get_autoplay_lang(chat_id)
-    await callback_query.edit_message_text(f"<b>Select Autoplay Language</b>\n\nChoose the language for autoplay songs:", reply_markup=language_markup(current_lang), disable_web_page_preview=True)
+    await callback_query.edit_message_text(
+        f"<b>{convert_to_special_font('Select Autoplay Language')}</b>\n\n{convert_to_special_font('Choose the language for autoplay songs:')}", 
+        reply_markup=language_markup(current_lang), 
+        disable_web_page_preview=True
+    )
 
 @app.on_callback_query(filters.regex(r"^autoplay_setlang\|(.+)$") & ~BANNED_USERS)
 @ActualAdminCB
@@ -158,9 +162,9 @@ async def autoplay_set_language(_, callback_query: CallbackQuery, __):
     lang = callback_query.data.split("|", 1)[1]
     chat_id = callback_query.message.chat.id
     await set_autoplay_lang(chat_id, lang)
-    await callback_query.answer(f"Language set to {LANGUAGES[lang]}", show_alert=False)
+    await callback_query.answer(f"{convert_to_special_font('Language set to')} {LANGUAGES[lang]}", show_alert=False)
     
-    # STAY ON LANGUAGE SELECTION PAGE - Don't go back to main settings
+    # STAY ON LANGUAGE SELECTION PAGE
     await callback_query.edit_message_reply_markup(reply_markup=language_markup(lang))
 
 @app.on_callback_query(filters.regex(r"^autoplay_mood$") & ~BANNED_USERS)
@@ -168,7 +172,11 @@ async def autoplay_set_language(_, callback_query: CallbackQuery, __):
 async def autoplay_mood_menu(_, callback_query: CallbackQuery, __):
     chat_id = callback_query.message.chat.id
     current_mood = await get_autoplay_mood(chat_id)
-    await callback_query.edit_message_text(f"<b>Select Autoplay Mood</b>\n\nChoose the mood for autoplay songs:", reply_markup=mood_markup(current_mood), disable_web_page_preview=True)
+    await callback_query.edit_message_text(
+        f"<b>{convert_to_special_font('Select Autoplay Mood')}</b>\n\n{convert_to_special_font('Choose the mood for autoplay songs:')}", 
+        reply_markup=mood_markup(current_mood), 
+        disable_web_page_preview=True
+    )
 
 @app.on_callback_query(filters.regex(r"^autoplay_setmood\|(.+)$") & ~BANNED_USERS)
 @ActualAdminCB
@@ -176,9 +184,9 @@ async def autoplay_set_mood(_, callback_query: CallbackQuery, __):
     mood = callback_query.data.split("|", 1)[1]
     chat_id = callback_query.message.chat.id
     await set_autoplay_mood(chat_id, mood)
-    await callback_query.answer(f"Mood set to {MOODS[mood]}", show_alert=False)
+    await callback_query.answer(f"{convert_to_special_font('Mood set to')} {MOODS[mood]}", show_alert=False)
     
-    # STAY ON MOOD SELECTION PAGE - Don't go back to main settings
+    # STAY ON MOOD SELECTION PAGE
     await callback_query.edit_message_reply_markup(reply_markup=mood_markup(mood))
 
 @app.on_callback_query(filters.regex(r"^autoplay_back$") & ~BANNED_USERS)
@@ -213,16 +221,15 @@ async def autoplay_from_player_callback(_, callback_query: CallbackQuery, __):
     lang = await get_autoplay_lang(chat_id)
     mood = await get_autoplay_mood(chat_id)
     
-    # Add back button
     markup = InlineKeyboardMarkup([
-        [InlineKeyboardButton("♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ" if status else "♬ ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ", 
+        [InlineKeyboardButton(convert_to_special_font("♬ Autoplay | Oɴ" if status else "♬ Autoplay | Oғғ"), 
          callback_data=f"autoplay_toggle|{'off' if status else 'on'}", 
          style=ButtonStyle.SUCCESS if status else ButtonStyle.DANGER)],
         [
-            InlineKeyboardButton("Lang.", callback_data="autoplay_lang", style=ButtonStyle.PRIMARY),
-            InlineKeyboardButton("Mood", callback_data="autoplay_mood", style=ButtonStyle.PRIMARY)
+            InlineKeyboardButton(convert_to_special_font("Lang."), callback_data="autoplay_lang", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton(convert_to_special_font("Mood"), callback_data="autoplay_mood", style=ButtonStyle.PRIMARY)
         ],
-        [InlineKeyboardButton("« Back to Player", callback_data="back_to_player", style=ButtonStyle.DANGER)],
+        [InlineKeyboardButton(convert_to_special_font("« Back to Player"), callback_data="back_to_player", style=ButtonStyle.DANGER)],
     ])
     
     await callback_query.edit_message_text(
@@ -234,7 +241,6 @@ async def autoplay_from_player_callback(_, callback_query: CallbackQuery, __):
 @app.on_callback_query(filters.regex(r"^back_to_player$") & ~BANNED_USERS)
 @ActualAdminCB
 async def back_to_player(_, callback_query: CallbackQuery, __):
-    # Just close the autoplay settings
     try:
         await callback_query.message.delete()
     except:
