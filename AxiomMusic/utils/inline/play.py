@@ -152,6 +152,18 @@ def stream_markup_timer(_, chat_id, played, dur):
 
 
 def stream_markup(_, chat_id):
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            autoplay_status = loop.create_task(is_autoplay(chat_id))
+        else:
+            autoplay_status = loop.run_until_complete(is_autoplay(chat_id))
+    except:
+        autoplay_status = False
+    
+    autoplay_text = "ᴀᴜᴛᴏᴘʟʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘᴀʏ | ғғ"
+    autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
+    
     thumb_status = get_thumbnail_status(chat_id)
 
     thumb_text = (
@@ -164,12 +176,7 @@ def stream_markup(_, chat_id):
         ButtonStyle.SUCCESS
         if thumb_status == "on"
         else ButtonStyle.DANGER
-    )
-
-    autoplay_status = asyncio.get_event_loop().run_until_complete(is_autoplay(chat_id))
-    autoplay_text = "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
-    autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
-    
+    )    
     buttons = [
         [
             InlineKeyboardButton(text="II", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
