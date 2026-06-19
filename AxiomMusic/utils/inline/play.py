@@ -68,42 +68,42 @@ def track_markup(_, videoid, user_id, channel, fplay):
 
 
 def stream_markup_timer(_, chat_id, played, dur):
-    played_sec = time_to_seconds(played)
-    duration_sec = time_to_seconds(dur)
-    percentage = (played_sec / duration_sec) * 100
-    ufff = math.floor(percentage)
+    # played_sec = time_to_seconds(played)
+    # duration_sec = time_to_seconds(dur)
+    # percentage = (played_sec / duration_sec) * 100
+    # ufff = math.floor(percentage)
     
-    # Determine bar and color based on progress
-    if 0 < ufff <= 10:
-        bar = "┃┊♡—————————┊┃"
-        bar_style = ButtonStyle.PRIMARY
-    elif 10 < ufff < 20:
-        bar = "┃┊—♡————————┊┃"
-        bar_style = ButtonStyle.SUCCESS
-    elif 20 <= ufff < 30:
-        bar = "┃┊——♡———————┊┃"
-        bar_style = ButtonStyle.DANGER
-    elif 30 <= ufff < 40:
-        bar = "┃┊———♡——————┊┃"
-        bar_style = ButtonStyle.PRIMARY
-    elif 40 <= ufff < 50:
-        bar = "┃┊————♡—————┊┃"
-        bar_style = ButtonStyle.SUCCESS
-    elif 50 <= ufff < 60:
-        bar = "┃┊—————♡————┊┃"
-        bar_style = ButtonStyle.DANGER
-    elif 60 <= ufff < 70:
-        bar = "┃┊——————♡———┊┃"
-        bar_style = ButtonStyle.PRIMARY
-    elif 70 <= ufff < 80:
-        bar = "┃┊———————♡——┊┃"
-        bar_style = ButtonStyle.SUCCESS
-    elif 80 <= ufff < 95:
-        bar = "┃┊————————♡—┊┃"
-        bar_style = ButtonStyle.DANGER
-    else:
-        bar = "┃┊—————————♡┊┃"
-        bar_style = ButtonStyle.PRIMARY
+    # # Determine bar and color based on progress
+    # if 0 < ufff <= 10:
+    #     bar = "┃┊♡—————————┊┃"
+    #     bar_style = ButtonStyle.PRIMARY
+    # elif 10 < ufff < 20:
+    #     bar = "┃┊—♡————————┊┃"
+    #     bar_style = ButtonStyle.SUCCESS
+    # elif 20 <= ufff < 30:
+    #     bar = "┃┊——♡———————┊┃"
+    #     bar_style = ButtonStyle.DANGER
+    # elif 30 <= ufff < 40:
+    #     bar = "┃┊———♡——————┊┃"
+    #     bar_style = ButtonStyle.PRIMARY
+    # elif 40 <= ufff < 50:
+    #     bar = "┃┊————♡—————┊┃"
+    #     bar_style = ButtonStyle.SUCCESS
+    # elif 50 <= ufff < 60:
+    #     bar = "┃┊—————♡————┊┃"
+    #     bar_style = ButtonStyle.DANGER
+    # elif 60 <= ufff < 70:
+    #     bar = "┃┊——————♡———┊┃"
+    #     bar_style = ButtonStyle.PRIMARY
+    # elif 70 <= ufff < 80:
+    #     bar = "┃┊———————♡——┊┃"
+    #     bar_style = ButtonStyle.SUCCESS
+    # elif 80 <= ufff < 95:
+    #     bar = "┃┊————————♡—┊┃"
+    #     bar_style = ButtonStyle.DANGER
+    # else:
+    #     bar = "┃┊—————————♡┊┃"
+    #     bar_style = ButtonStyle.PRIMARY
 
     try:
         loop = asyncio.get_event_loop()
@@ -114,7 +114,7 @@ def stream_markup_timer(_, chat_id, played, dur):
     except:
         autoplay_status = False
     
-    autoplay_text = "ᴀᴜᴛᴏᴘʟʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘᴀʏ | ғғ"
+    autoplay_text = "ᴀᴜᴛᴏᴘʟʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘᴀʏ | ᴏғғ"
     autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
     
     thumb_status = get_thumbnail_status(chat_id)
@@ -131,29 +131,31 @@ def stream_markup_timer(_, chat_id, played, dur):
         else ButtonStyle.DANGER
     ) 
     buttons = [
+        # [
+        #     InlineKeyboardButton(
+        #         text=f"{played} {bar} {dur}",
+        #         url=f"https://t.me/{app.username}?startgroup=true",
+        #         style=bar_style,
+        #     )
+        # ],
         [
-            InlineKeyboardButton(
-                text=f"{played} {bar} {dur}",
-                url=f"https://t.me/{app.username}?startgroup=true",
-                style=bar_style,
-            )
-        ],
-        [
-            InlineKeyboardButton(text="II", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
-            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Pause|{chat_id}", style=random_style()),
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
+            # InlineKeyboardButton(text="II", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
+            # InlineKeyboardButton(text="▷", callback_data=f"ADMIN Pause|{chat_id}", style=random_style()),
             InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
             InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=random_style()),
             InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=random_style()),
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
         ],
         [
             InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style),
             InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_inline_config|{chat_id}", style=autoplay_style),
         ],
-        [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
-            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
-        ]
+        # [
+        #     InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
+        #     InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
+        #     InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
+        # ]
     ]
     return buttons
 
@@ -168,7 +170,7 @@ def stream_markup(_, chat_id):
     except:
         autoplay_status = False
     
-    autoplay_text = "ᴀᴜᴛᴏᴘʟʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘᴀʏ | ғғ"
+    autoplay_text = "ᴀᴜᴛᴏᴘʟʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘᴀʏ | ᴏғғ"
     autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
     
     thumb_status = get_thumbnail_status(chat_id)
