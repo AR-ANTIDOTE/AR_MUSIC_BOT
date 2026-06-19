@@ -152,19 +152,41 @@ def stream_markup_timer(_, chat_id, played, dur):
 
 
 def stream_markup(_, chat_id):
+    thumb_status = get_thumbnail_status(chat_id)
+
+    thumb_text = (
+        "ᴛʜᴜᴍʙ | ᴏɴ"
+        if thumb_status == "on"
+        else "ᴛʜᴜᴍʙ | ᴏғғ"
+    )
+    
+    thumb_style = (
+        ButtonStyle.SUCCESS
+        if thumb_status == "on"
+        else ButtonStyle.DANGER
+    )
+
+    autoplay_status = asyncio.get_event_loop().run_until_complete(is_autoplay(chat_id))
+    autoplay_text = "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
+    autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
+    
     buttons = [
         [
-            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}"),
-            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}"),
-            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}"),
-            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}"),
-            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
+            InlineKeyboardButton(text="II", callback_data=f"ADMIN Resume|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Pause|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style=random_style()),
+            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}", style=random_style()),
         ],
         [
-            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25"),
-            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25"),
+            InlineKeyboardButton(text=thumb_text, callback_data=f"THUMBTOGGLE|{chat_id}", style=thumb_style),
+            InlineKeyboardButton(text=autoplay_text, callback_data=f"autoplay_inline_config|{chat_id}", style=autoplay_style),
         ],
-        [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close")],
+        [
+            InlineKeyboardButton("⪻ -𝟸5s", callback_data="seek_backward_25", style=random_style()),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}", style=random_style()),
+            InlineKeyboardButton("+𝟸5s ⪼", callback_data="seek_forward_25", style=random_style()),
+        ]
     ]
     return buttons
 
