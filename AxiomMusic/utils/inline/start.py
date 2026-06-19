@@ -57,20 +57,27 @@ def private_panel(_):
         ],
         [
             InlineKeyboardButton(
-                text=_["S_B_5"],
-                user_id=config.OWNER_ID,
-                style=axiombtn(),
-            ),
-            InlineKeyboardButton(
-                text="📼ʏᴛ-ᴀᴘɪ",
-                callback_data="api_status",
+                text=_["S_B_4"],
+                callback_data="settings_back_helper",
                 style=axiombtn(),
             ),
         ],
         [
             InlineKeyboardButton(
+                text=_["S_B_5"],
+                user_id=config.OWNER_ID,
+                style=ButtonStyle.SUCCESS,
+            ),
+            InlineKeyboardButton(
                 text=_["S_B_6"],
                 url=config.SUPPORT_CHAT,
+                style=axiombtn(),
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="📼𝐘‌ᴛ-𝐀‌ᴘɪ",
+                callback_data="api_status",
                 style=axiombtn(),
             ),
             InlineKeyboardButton(
@@ -79,12 +86,9 @@ def private_panel(_):
                 style=axiombtn(),
             ),
         ],
-        [
-            InlineKeyboardButton(
-                text=_["S_B_4"],
-                callback_data="settings_back_helper",
-                style=axiombtn(),
-            ),
-        ],
     ]
     return buttons
+
+
+
+
