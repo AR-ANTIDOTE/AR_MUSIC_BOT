@@ -123,15 +123,15 @@ def stream_markup_timer(_, chat_id, played, dur):
     except:
         autoplay_status = False
     
-    autoplay_text = "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
+    autoplay_text = "𝐀ᴜᴛᴏᴘʟᴀʏ | 𝐎‌ɴ" if autoplay_status else "𝐀ᴜᴛᴏᴘʟᴀʏ | 𝐎‌ғғ"
     autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
     
     thumb_status = get_thumbnail_status(chat_id)
 
     thumb_text = (
-        "ᴛʜᴜᴍʙ | ᴏɴ"
+        "𝐓‌ʜᴜᴍʙ | 𝐎‌ɴ"
         if thumb_status == "on"
-        else "ᴛʜᴜᴍʙ | ᴏғғ"
+        else "𝐓‌ʜᴜᴍʙ | 𝐎‌ғғ"
     )
     
     thumb_style = (
@@ -179,15 +179,15 @@ def stream_markup(_, chat_id):
     except:
         autoplay_status = False
     
-    autoplay_text = "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏɴ" if autoplay_status else "ᴀᴜᴛᴏᴘʟᴀʏ | ᴏғғ"
+    autoplay_text = "𝐀ᴜᴛᴏᴘʟᴀʏ | 𝐎‌ɴ" if autoplay_status else "𝐀ᴜᴛᴏᴘʟᴀʏ | 𝐎‌ғғ"
     autoplay_style = ButtonStyle.SUCCESS if autoplay_status else ButtonStyle.DANGER
     
     thumb_status = get_thumbnail_status(chat_id)
 
     thumb_text = (
-        "ᴛʜᴜᴍʙ | ᴏɴ"
+        "𝐓‌ʜᴜᴍʙ | 𝐎‌ɴ"
         if thumb_status == "on"
-        else "ᴛʜᴜᴍʙ | ᴏғғ"
+        else "𝐓‌ʜᴜᴍʙ | 𝐎‌ғғ"
     )
     
     thumb_style = (
